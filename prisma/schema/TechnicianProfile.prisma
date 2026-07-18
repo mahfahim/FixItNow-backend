@@ -1,0 +1,30 @@
+model TechnicianProfile {
+    id                 String   @id @default(uuid())
+    userId             String   @unique
+    bio                String?  @db.Text
+    yearsOfExperience  Int      @default(0)
+    hourlyRate         Decimal  @db.Decimal(10, 2)
+    averageRating      Decimal  @default(0) @db.Decimal(3, 2)
+    totalReviews       Int      @default(0)
+    totalCompletedJobs Int      @default(0)
+    profileImage       String?
+    phone              String?  @db.VarChar(20)
+    address            String?
+    city               String?  @db.VarChar(100)
+    district           String?  @db.VarChar(100)
+    isDeleted          Boolean  @default(false)
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+    services             Service[]
+    bookingsAsTechnician Booking[]            @relation("TechnicianBookings")
+    reviewsReceived      Review[]             @relation("TechnicianReviews")
+    availabilitySlots    AvailabilitySlot[]
+    favoritedBy          FavoriteTechnician[] @relation("TechnicianFavorites")
+
+    @@index([city])
+    @@index([district])
+    @@index([averageRating])
+    @@map("technician_profiles")
+}

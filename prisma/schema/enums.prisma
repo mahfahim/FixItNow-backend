@@ -1,0 +1,49 @@
+enum Role {
+    CUSTOMER
+    TECHNICIAN
+    ADMIN
+}
+
+enum UserStatus {
+    ACTIVE
+    BLOCKED
+}
+
+enum BookingStatus {
+    REQUESTED
+    ACCEPTED
+    DECLINED
+    PAID
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+enum PaymentStatus {
+    PENDING
+    COMPLETED
+    FAILED
+    REFUNDED
+}
+
+enum PaymentProvider {
+    STRIPE
+    SSLCOMMERZ
+}
+
+enum Weekday {
+    MONDAY
+    TUESDAY
+    WEDNESDAY
+    THURSDAY
+    FRIDAY
+    SATURDAY
+    SUNDAY
+}
+
+enum NotificationType {
+    BOOKING
+    PAYMENT
+    SYSTEM
+    REVIEW
+}

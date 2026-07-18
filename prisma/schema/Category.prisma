@@ -1,0 +1,16 @@
+model Category {
+    id          String   @id @default(uuid())
+    name        String   @db.VarChar(100)
+    slug        String   @unique @db.VarChar(120)
+    icon        String?
+    description String?  @db.Text
+    isActive    Boolean  @default(true)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    services Service[]
+
+    @@index([slug])
+    @@index([isActive])
+    @@map("categories")
+}

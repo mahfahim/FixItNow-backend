@@ -1,0 +1,14 @@
+model FavoriteTechnician {
+    id           String   @id @default(uuid())
+    customerId   String
+    technicianId String
+    createdAt    DateTime @default(now())
+
+    customer   User              @relation("CustomerFavorites", fields: [customerId], references: [id], onDelete: Cascade)
+    technician TechnicianProfile @relation("TechnicianFavorites", fields: [technicianId], references: [id], onDelete: Cascade)
+
+    @@unique([customerId, technicianId])
+    @@index([customerId])
+    @@index([technicianId])
+    @@map("favorite_technicians")
+}
