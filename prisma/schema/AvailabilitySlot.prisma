@@ -1,17 +1,17 @@
 model AvailabilitySlot {
-    id           String   @id @default(uuid())
-    technicianId String
-    weekday      Weekday
-    startTime    String   @db.VarChar(10)
-    endTime      String   @db.VarChar(10)
-    isAvailable  Boolean  @default(true)
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+  id           String   @id @default(uuid())
+  technicianId String
+  weekday      Weekday
+  startTime    String   @db.VarChar(10)
+  endTime      String   @db.VarChar(10)
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-    technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
 
-    @@unique([technicianId, weekday, startTime, endTime])
-    @@index([technicianId])
-    @@index([weekday])
-    @@map("availability_slots")
+  @@unique([technicianId, weekday, startTime, endTime])
+  @@index([technicianId])
+  @@index([weekday])
+  @@map("availability_slots")
 }

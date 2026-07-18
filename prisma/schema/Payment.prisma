@@ -1,19 +1,19 @@
 model Payment {
-    id            String          @id @default(uuid())
-    bookingId     String          @unique
-    transactionId String          @unique @db.VarChar(150)
-    amount        Decimal         @db.Decimal(10, 2)
-    currency      String          @default("USD") @db.VarChar(10)
-    provider      PaymentProvider
-    status        PaymentStatus   @default(PENDING)
-    paidAt        DateTime?
-    metadata      Json?
-    createdAt     DateTime        @default(now())
-    updatedAt     DateTime        @updatedAt
+  id            String          @id @default(uuid())
+  bookingId     String          @unique
+  transactionId String          @unique @db.VarChar(150)
+  amount        Decimal         @db.Decimal(10, 2)
+  currency      String          @default("USD") @db.VarChar(10)
+  provider      PaymentProvider
+  status        PaymentStatus   @default(PENDING)
+  paidAt        DateTime?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-    booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-    @@index([status])
-    @@index([provider])
-    @@map("payments")
+  @@index([status])
+  @@index([provider])
+  @@map("payments")
 }

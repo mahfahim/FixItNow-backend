@@ -1,21 +1,21 @@
 model User {
-  id                  String     @id @default(uuid())
-  email               String     @unique @db.VarChar(255)
-  password            String     @db.VarChar(255)
-  role                Role       @default(CUSTOMER)
-  status              UserStatus @default(ACTIVE)
-  isDeleted           Boolean    @default(false)
-  lastLoginAt         DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id          String     @id @default(uuid())
+  email       String     @unique @db.VarChar(255)
+  password    String     @db.VarChar(255)
+  role        Role       @default(CUSTOMER)
+  status      UserStatus @default(ACTIVE)
+  isDeleted   Boolean    @default(false)
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   technicianProfile   TechnicianProfile?
   addresses           Address[]
-  bookingsAsCustomer  Booking[]             @relation("CustomerBookings")
-  reviewsGiven        Review[]              @relation("CustomerReviews")
+  bookingsAsCustomer  Booking[]            @relation("CustomerBookings")
+  reviewsGiven        Review[]             @relation("CustomerReviews")
   refreshTokens       RefreshToken[]
   notifications       Notification[]
-  favoriteTechnicians FavoriteTechnician[]  @relation("CustomerFavorites")
+  favoriteTechnicians FavoriteTechnician[] @relation("CustomerFavorites")
 
   @@index([role])
   @@index([status])

@@ -1,33 +1,33 @@
 model Booking {
-    id                 String        @id @default(uuid())
-    customerId         String
-    technicianId       String
-    serviceId          String
-    addressId          String?
-    scheduledDate      DateTime      @db.Date
-    scheduledTime      String        @db.VarChar(10)
-    address            String
-    notes              String?       @db.Text
-    price              Decimal       @db.Decimal(10, 2)
-    status             BookingStatus @default(REQUESTED)
-    paymentStatus      PaymentStatus @default(PENDING)
-    cancellationReason String?       @db.Text
-    createdAt          DateTime      @default(now())
-    updatedAt          DateTime      @updatedAt
+  id                 String        @id @default(uuid())
+  customerId         String
+  technicianId       String
+  serviceId          String
+  addressId          String?
+  scheduledDate      DateTime      @db.Date
+  scheduledTime      String        @db.VarChar(10)
+  address            String
+  notes              String?       @db.Text
+  price              Decimal       @db.Decimal(10, 2)
+  status             BookingStatus @default(REQUESTED)
+  paymentStatus      PaymentStatus @default(PENDING)
+  cancellationReason String?       @db.Text
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-    customer      User                   @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
-    technician    TechnicianProfile      @relation("TechnicianBookings", fields: [technicianId], references: [id], onDelete: Restrict)
-    service       Service                @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-    addressRef    Address?               @relation(fields: [addressId], references: [id], onDelete: SetNull)
-    payment       Payment?
-    review        Review?
-    statusHistory BookingStatusHistory[]
+  customer      User                   @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
+  technician    TechnicianProfile      @relation("TechnicianBookings", fields: [technicianId], references: [id], onDelete: Restrict)
+  service       Service                @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  addressRef    Address?               @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  payment       Payment?
+  review        Review?
+  statusHistory BookingStatusHistory[]
 
-    @@index([customerId])
-    @@index([technicianId])
-    @@index([serviceId])
-    @@index([status])
-    @@index([paymentStatus])
-    @@index([scheduledDate])
-    @@map("bookings")
+  @@index([customerId])
+  @@index([technicianId])
+  @@index([serviceId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([scheduledDate])
+  @@map("bookings")
 }
