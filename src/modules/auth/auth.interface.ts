@@ -8,7 +8,7 @@ export interface IRegisterUser {
   name: string;
   email: string;
   password: string;
-  role: "CUSTOMER" | "TECHNICIAN";
+  role: "CUSTOMER" | "TECHNICIAN" | "ADMIN";
 }
 
 export type IUpdateUserProfile = {
