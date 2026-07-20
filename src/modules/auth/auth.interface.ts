@@ -10,3 +10,16 @@ export interface IRegisterUser {
   password: string;
   role: "CUSTOMER" | "TECHNICIAN";
 }
+
+export type IUpdateUserProfile = {
+  name?: string;
+};
+
+export type ICreateAddress = {
+  label?: string;
+  addressLine: string;
+  city: string;
+  district: string;
+  postalCode?: string;
+  isDefault?: boolean;
+};

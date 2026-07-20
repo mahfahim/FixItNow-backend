@@ -5,7 +5,7 @@ import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import { ILoginUser, IRegisterUser } from "./auth.interface";
-
+import { ICreateAddress, IUpdateUserProfile } from './auth.interface';
 
 
 const registerUserIntoDB = async (payload: IRegisterUser) => {
@@ -150,45 +150,71 @@ const refreshToken = async (refreshToken : string) => {
 }
 
 
+const getMyProfile = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      technicianProfile: true,
+      addresses: true,
+    },
+  });
 
+  if (!user) {
+    throw new Error('User not found');
+  }
 
-
-const getMeFromDB = async (userId: string) => {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            status: true,
-            isDeleted: true,
-            technicianProfile: true, 
-            addresses: true, 
-        },
-    });
-
-    if (!user) {
-        throw new Error("User profile not found");
-    }
-
-    if (user.isDeleted) {
-        throw new Error("User account has been deleted");
-    }
-
-    if (user.status === "BLOCKED") {
-        throw new Error("User is blocked!");
-    }
-
-    
-    const { isDeleted, ...userProfile } = user;
-    
-    return userProfile;
+  return user;
 };
+
+
+const updateMyProfile = async (
+  userId: string,
+  payload: IUpdateUserProfile
+) => {
+  const { name } = payload;
+
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+
+  return result;
+};
+
+const addAddress = async (userId: string, payload: ICreateAddress) => {
+  const address = await prisma.address.create({
+    data: {
+      ...payload,
+      userId,
+    },
+  });
+
+  return address;
+};
+
 
 export const AuthService = {
   registerUserIntoDB,
   loginUser,
-  getMeFromDB,
-  refreshToken
+  refreshToken,
+  getMyProfile,
+  updateMyProfile,
+  addAddress,
 };

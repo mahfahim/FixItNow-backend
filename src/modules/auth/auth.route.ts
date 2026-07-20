@@ -8,11 +8,8 @@ const router = Router();
 
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
-
-router.get(
-  '/me', 
-  auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN), 
-  AuthController.getMe
-);
+router.get('/me', auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN), AuthController.getMyProfile);
+router.patch('/me', auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN), AuthController.updateMyProfile);
+router.post('/address', auth(Role.CUSTOMER), AuthController.addAddress);
 
 export const AuthRoutes = router;

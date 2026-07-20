@@ -6,6 +6,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
 import config from "../../config";
 
+
 const register = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.registerUserIntoDB(req.body);
 
@@ -67,21 +68,49 @@ const refreshToken = catchAsync(async (req : Request, res : Response, next: Next
     })
 })
 
-const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user?.id as string;
-  const result = await AuthService.getMeFromDB(userId);
+
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const userID = req.user?.id as string;
+  const result = await AuthService.getMyProfile(userID);
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: "Current user profile fetched successfully",
+    message: 'User profile retrieved successfully',
     data: result,
   });
 });
+
+const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const userID = req.user?.id as string;
+  const result = await AuthService.updateMyProfile(userID, req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User profile updated successfully',
+    data: result,
+  });
+});
+
+const addAddress = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const result = await AuthService.addAddress(userId, req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: 'Address added successfully',
+    data: result,
+  });
+});
+
 
 export const AuthController = {
   register,
   login,
   refreshToken,
-  getMe,
+  getMyProfile,
+  updateMyProfile,
+  addAddress,
 };
