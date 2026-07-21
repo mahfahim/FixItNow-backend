@@ -12,3 +12,10 @@ export type ICreateCategory = {
 export type IUpdateCategory = Partial<ICreateCategory> & {
   isActive?: boolean;
 };
+
+export type IPaginationOptions = {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+};

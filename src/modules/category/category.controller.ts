@@ -3,7 +3,7 @@ import httpStatus from 'http-status';
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { CategoryService } from './category.service';
-import { ICategoryFilterRequest } from './category.interface';
+import { ICategoryFilterRequest, IPaginationOptions } from './category.interface';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.createCategory(req.body);
@@ -16,10 +16,11 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
+  
   const filters: ICategoryFilterRequest = {};
 
-  // Safely extract and type-cast the query parameters
   if (req.query.search) {
     filters.search = req.query.search as string;
   }
@@ -28,15 +29,28 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
     filters.isActive = req.query.isActive === 'true';
   }
 
-  const result = await CategoryService.getAllCategories(filters);
+  
+  const paginationOptions: IPaginationOptions = {
+    page: req.query.page ? Number(req.query.page) : undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    sortBy: req.query.sortBy as string,
+    sortOrder: req.query.sortOrder as 'asc' | 'desc',
+  };
 
+
+  const result = await CategoryService.getAllCategories(filters, paginationOptions);
+
+  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Categories fetched successfully',
-    data: result,
+    meta: result.meta, 
+    data: result.data, 
   });
 });
+
+
 
 const getCategoryById = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.getCategoryById(req.params.id as string);

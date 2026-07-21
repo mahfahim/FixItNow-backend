@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { Prisma } from "../../../generated/prisma/client";
-import { ICreateCategory, IUpdateCategory, ICategoryFilterRequest } from './category.interface'; 
+import { ICreateCategory, IUpdateCategory, ICategoryFilterRequest,IPaginationOptions } from './category.interface'; 
 
 const createCategory = async (payload: ICreateCategory) => {
   const slug = payload.name.toLowerCase().replace(/\s+/g, '-');
@@ -23,9 +23,23 @@ const createCategory = async (payload: ICreateCategory) => {
   return result;
 };
 
-const getAllCategories = async (filters: ICategoryFilterRequest) => {
+
+const getAllCategories = async (
+  filters: ICategoryFilterRequest,
+  paginationOptions: IPaginationOptions
+) => {
   const { search, isActive } = filters;
   
+  
+  const page = Number(paginationOptions.page || 1);
+  const limit = Number(paginationOptions.limit || 10);
+  const skip = (page - 1) * limit;
+  const validSortFields = ['name', 'slug', 'createdAt', 'updatedAt'];
+  const sortBy = validSortFields.includes(paginationOptions.sortBy || '')
+    ? paginationOptions.sortBy!
+    : 'createdAt';
+  const sortOrder = paginationOptions.sortOrder || 'desc';
+
   const andConditions: Prisma.CategoryWhereInput[] = [];
 
   
@@ -34,35 +48,54 @@ const getAllCategories = async (filters: ICategoryFilterRequest) => {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
       ],
     });
   }
 
-
+  
   if (isActive !== undefined) {
+    
     andConditions.push({
       isActive: isActive,
     });
   }
 
-  
-  const whereConditions: Prisma.CategoryWhereInput = 
+  const whereConditions: Prisma.CategoryWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
+  
   const result = await prisma.category.findMany({
     where: whereConditions,
+    skip,
+    take: limit,
     include: {
       _count: {
         select: { services: true },
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      [sortBy]: sortOrder,
     },
   });
 
-  return result;
+  
+  const total = await prisma.category.count({
+    where: whereConditions,
+  });
+
+  
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
 };
+
+
 
 const getCategoryById = async (id: string) => {
   const result = await prisma.category.findUnique({
