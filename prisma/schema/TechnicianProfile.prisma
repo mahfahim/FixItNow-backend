@@ -3,7 +3,7 @@ model TechnicianProfile {
   userId             String   @unique
   bio                String?  @db.Text
   yearsOfExperience  Int      @default(0)
-  hourlyRate         Decimal  @db.Decimal(10, 2)
+  hourlyRate         Decimal  @default(0) @db.Decimal(10, 2)
   averageRating      Decimal  @default(0) @db.Decimal(3, 2)
   totalReviews       Int      @default(0)
   totalCompletedJobs Int      @default(0)

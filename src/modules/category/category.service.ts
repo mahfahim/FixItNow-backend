@@ -1,3 +1,4 @@
+// src/modules/category/category.service.ts
 import { prisma } from "../../lib/prisma";
 import { Prisma } from "../../../generated/prisma/client";
 import { ICreateCategory, IUpdateCategory, ICategoryFilterRequest,IPaginationOptions } from './category.interface'; 
