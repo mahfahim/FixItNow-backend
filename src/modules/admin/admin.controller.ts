@@ -64,10 +64,36 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getAllReviews = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminService.getAllReviews();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'All reviews fetched successfully',
+    data: result,
+  });
+});
+
+const deleteReview = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminService.deleteReview(req.params.id as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Review deleted successfully',
+    data: result,
+  });
+});
+
+
 export const AdminController = {
   getAllUsers,
   updateUserStatus,
   getAllBookingsAdmin,
   getAllCategories,
   createCategory,
+  getAllReviews,
+  deleteReview
 };

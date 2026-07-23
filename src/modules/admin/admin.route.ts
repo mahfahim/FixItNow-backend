@@ -13,4 +13,16 @@ router.get('/bookings', auth(Role.ADMIN), AdminController.getAllBookingsAdmin);
 router.get('/categories', auth(Role.ADMIN), AdminController.getAllCategories);
 router.post('/categories', auth(Role.ADMIN), AdminController.createCategory);
 
+router.get(
+  '/reviews',
+  auth(Role.ADMIN),
+  AdminController.getAllReviews
+);
+
+router.delete(
+  '/reviews/:id',
+  auth(Role.ADMIN),
+  AdminController.deleteReview
+);
+
 export const AdminRoutes = router;

@@ -5,6 +5,8 @@ import {
   IUpdateUserStatusPayload,
   ICreateCategoryPayload,
 } from './admin.interface';
+import httpStatus from 'http-status';
+import AppError from '../../errors/AppError';
 
 const getAllUsers = async (filters: IUserManagementFilterOptions) => {
   const { role, status, search } = filters;
@@ -107,10 +109,69 @@ const createCategory = async (payload: ICreateCategoryPayload) => {
   return category;
 };
 
+
+const getAllReviews = async () => {
+  const reviews = await prisma.review.findMany({
+    include: {
+      customer: { select: { id: true, name: true, email: true } },
+      technician: {
+        include: { user: { select: { name: true, email: true } } },
+      },
+      booking: { select: { id: true, service: { select: { title: true } } } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return reviews;
+};
+
+const deleteReview = async (reviewId: string) => {
+  const existingReview = await prisma.review.findUnique({
+    where: { id: reviewId },
+  });
+
+  if (!existingReview) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Review not found');
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const deleted = await tx.review.delete({
+      where: { id: reviewId },
+    });
+
+    // Recalculate technician profile rating
+    const ratingAggregate = await tx.review.aggregate({
+      where: { technicianId: existingReview.technicianId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    const averageRating = ratingAggregate._avg.rating
+      ? Number(ratingAggregate._avg.rating.toFixed(2))
+      : 0;
+    const totalReviews = ratingAggregate._count.rating || 0;
+
+    await tx.technicianProfile.update({
+      where: { id: existingReview.technicianId },
+      data: {
+        averageRating,
+        totalReviews,
+      },
+    });
+
+    return deleted;
+  });
+
+  return result;
+};
+
+
 export const AdminService = {
   getAllUsers,
   updateUserStatus,
   getAllBookingsAdmin,
   getAllCategories,
   createCategory,
+  getAllReviews,
+  deleteReview,
 };
