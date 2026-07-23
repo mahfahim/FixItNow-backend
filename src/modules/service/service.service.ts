@@ -1,5 +1,6 @@
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
+import { Prisma } from '../../../generated/prisma/client';
 import { prisma } from '../../lib/prisma';
 import {
   ICreateServicePayload,
@@ -8,14 +9,25 @@ import {
 } from './service.interface';
 
 const createService = async (
-  authUser: { userId: string; role: string },
+  authUser: { id: string; role: string; [key: string]: any },
   payload: ICreateServicePayload
 ) => {
-  let targetTechnicianId = payload.technicianId;
+  // auth.ts এ req.user.id হিসেবে আছে, তাই authUser.id ব্যবহার করা হয়েছে
+  const currentUserId = authUser.id || authUser.userId;
 
-  if (authUser.role === 'TECHNICIAN') {
+  if (!currentUserId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'User ID not found in authentication context'
+    );
+  }
+
+  let targetTechnicianId = payload.technicianId;
+  const userRole = authUser.role?.toUpperCase();
+
+  if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: authUser.userId },
+      where: { userId: currentUserId }, // 🟢 authUser.id দিয়ে সঠিকভাবে খোঁজা হচ্ছে
     });
 
     if (!technicianProfile) {
@@ -25,7 +37,7 @@ const createService = async (
       );
     }
     targetTechnicianId = technicianProfile.id;
-  } else if (authUser.role === 'ADMIN') {
+  } else if (userRole === 'ADMIN') {
     if (!targetTechnicianId) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
@@ -33,7 +45,6 @@ const createService = async (
       );
     }
 
-    // Admin targetTechnicianId হিসেবে TechnicianProfile.id অথবা User.id দুটোই পাঠাতে পারবে
     const technicianProfile = await prisma.technicianProfile.findFirst({
       where: {
         OR: [
@@ -53,6 +64,13 @@ const createService = async (
     targetTechnicianId = technicianProfile.id;
   }
 
+  if (!targetTechnicianId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'technicianId could not be resolved'
+    );
+  }
+
   const category = await prisma.category.findUnique({
     where: { id: payload.categoryId },
   });
@@ -66,7 +84,10 @@ const createService = async (
   const service = await prisma.service.create({
     data: {
       ...serviceData,
-      technicianId: targetTechnicianId as string,
+      price: new Prisma.Decimal(serviceData.price), // 🟢 Decimal Explicit Safe Handling
+      images: serviceData.images || [],             // 🟢 Default Array Safety
+      serviceArea: serviceData.serviceArea || [],   // 🟢 Default Array Safety
+      technicianId: targetTechnicianId,             // 🟢 Validated Technician Profile ID
     },
     include: {
       category: true,
@@ -78,6 +99,7 @@ const createService = async (
 
   return service;
 };
+
 
 const getAllServices = async (filters: IServiceFilterOptions) => {
   const { search, categoryId, minPrice, maxPrice, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
@@ -162,12 +184,14 @@ const getServiceById = async (id: string) => {
 
   return service;
 };
-
 const updateService = async (
-  authUser: { userId: string; role: string },
+  authUser: { id?: string; userId?: string; role: string; [key: string]: any },
   serviceId: string,
   payload: IUpdateServicePayload
 ) => {
+  // 🟢 authUser.id বা authUser.userId দুটোই সেফলি হ্যান্ডেল করা হয়েছে
+  const currentUserId = authUser.id || authUser.userId;
+
   const existingService = await prisma.service.findUnique({
     where: { id: serviceId },
   });
@@ -176,9 +200,11 @@ const updateService = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Service not found');
   }
 
-  if (authUser.role === 'TECHNICIAN') {
+  const userRole = authUser.role?.toUpperCase();
+
+  if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: authUser.userId },
+      where: { userId: currentUserId }, // 🟢 Fixed: userId: undefined হওয়া বন্ধ করা হলো
     });
 
     if (
@@ -201,9 +227,15 @@ const updateService = async (
     }
   }
 
+  // 🟢 Price আপডেট করার ক্ষেত্রে প্রিসমার Decimal Safe Format নিশ্চিত করা
+  const updateData: any = { ...payload };
+  if (payload.price !== undefined) {
+    updateData.price = new Prisma.Decimal(payload.price);
+  }
+
   const updatedService = await prisma.service.update({
     where: { id: serviceId },
-    data: payload,
+    data: updateData,
     include: {
       category: true,
       technician: {
@@ -216,9 +248,12 @@ const updateService = async (
 };
 
 const deleteService = async (
-  authUser: { userId: string; role: string },
+  authUser: { id?: string; userId?: string; role: string; [key: string]: any },
   serviceId: string
 ) => {
+  // 🟢 authUser.id বা authUser.userId দুটোই সেফলি হ্যান্ডেল করা হয়েছে
+  const currentUserId = authUser.id || authUser.userId;
+
   const existingService = await prisma.service.findUnique({
     where: { id: serviceId },
   });
@@ -227,9 +262,11 @@ const deleteService = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Service not found');
   }
 
-  if (authUser.role === 'TECHNICIAN') {
+  const userRole = authUser.role?.toUpperCase();
+
+  if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: authUser.userId },
+      where: { userId: currentUserId }, // 🟢 Fixed: userId: undefined হওয়া বন্ধ করা হলো
     });
 
     if (

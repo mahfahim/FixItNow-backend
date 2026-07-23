@@ -32,7 +32,7 @@ app.get("/",(req : Request, res : Response) => {
 
 app.use("/api/auth", AuthRoutes)
 app.use("/api/categories", CategoryRoutes)
-app.use("/api/technicians", TechnicianRoutes)
+app.use('/api/technicians', TechnicianRoutes);
 app.use("/api/services", ServiceRoutes);
 app.use("/api/bookings", BookingRoutes);
 app.use('/api/admin', AdminRoutes);

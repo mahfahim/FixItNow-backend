@@ -55,30 +55,29 @@ const registerUserIntoDB = async (payload: IRegisterUser) => {
 };
 
 
-
 const loginUser = async (payload: ILoginUser) => {
     const { email, password } = payload;
 
-    const user = await prisma.user.findUniqueOrThrow({
+    
+    const user = await prisma.user.findUnique({
         where: { email },
+        include: {
+            technicianProfile: true,
+        },
     });
 
-    
     if (!user) {
         throw new Error("User does not exist");
     }
 
-    
     if (user.isDeleted) {
         throw new Error("This account has been deleted.");
     }
 
-    
     if (user.status === "BLOCKED") {
         throw new Error("Your account has been blocked. Please contact support.");
     }
 
-    
     const isPasswordMatched = await bcrypt.compare(password, user.password);
     
     if (!isPasswordMatched) {
@@ -90,6 +89,7 @@ const loginUser = async (payload: ILoginUser) => {
         id: user.id,
         email: user.email,
         role: user.role,
+        technicianProfileId: user.technicianProfile?.id || null,
     };
 
     const accessToken = jwtUtils.createToken(
@@ -111,42 +111,45 @@ const loginUser = async (payload: ILoginUser) => {
 };
 
 
-
-
 const refreshToken = async (refreshToken : string) => {
-    const verifiedRefreshToken = jwtUtils.verifyToken(refreshToken, config.jwt_refresh_secret);
+    const verifiedRefreshToken = jwtUtils.verifyToken(refreshToken, config.jwt_refresh_secret as string);
 
     if(!verifiedRefreshToken.success){
         throw new Error(verifiedRefreshToken.error)
     }
 
-    const {id} = verifiedRefreshToken.data as JwtPayload;
+    const { id } = verifiedRefreshToken.data as JwtPayload;
 
-    const user = await prisma.user.findUniqueOrThrow({
-        where : {
-            id
-        }
-    })
+    const user = await prisma.user.findUnique({
+        where: { id },
+        include: {
+            technicianProfile: true,
+        },
+    });
+
+    if (!user) {
+        throw new Error("User not found!");
+    }
 
     if(user.status === "BLOCKED"){
         throw new Error("User is blocked!")
     }
 
     const jwtPayload = {
-        id,
-        name : user.name,
-        email : user.email,
-        role : user.role
-    }
-
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        technicianProfileId: user.technicianProfile?.id || null,
+    };
 
     const accessToken = jwtUtils.createToken(
         jwtPayload,
-        config.jwt_access_secret,
+        config.jwt_access_secret as string,
         config.jwt_access_expires_in as SignOptions
     );
 
-    return {accessToken}
+    return { accessToken }
 }
 
 
