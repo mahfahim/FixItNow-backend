@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "strip:webhook": "stripe listen --forward-to localhost:5000/api/payment/webhook/stripe",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:seed": "prisma db seed"
   },
@@ -37,6 +38,7 @@
     "express": "^5.2.1",
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.22.0"
+    "pg": "^8.22.0",
+    "stripe": "^22.3.2"
   }
 }

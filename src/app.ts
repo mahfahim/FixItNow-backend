@@ -1,4 +1,4 @@
-//src/app.ts
+// src/app.ts
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { Application, Request, Response } from "express";
@@ -12,20 +12,29 @@ import { ServiceRoutes } from "./modules/service/service.route";
 import { BookingRoutes } from "./modules/booking/booking.route";
 import { AdminRoutes } from "./modules/admin/admin.route";
 import { ReviewRoutes } from "./modules/review/review.route";
+import { PaymentRoutes } from "./modules/payment/payment.route";
+import { PaymentController } from "./modules/payment/payment.controller";
 
-const app : Application = express();
+const app: Application = express();
 
 app.use(cors({
-    origin : config.app_url,
-    credentials : true,
+    origin: config.app_url,
+    credentials: true,
 }))
 
+
+app.post(
+    "/api/payment/webhook/stripe",
+    express.raw({ type: "application/json" }),
+    PaymentController.stripeWebhook
+);
+
 app.use(express.json());
-app.use(express.urlencoded({ extended : true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-app.get("/",(req : Request, res : Response) => {
+app.get("/", (req: Request, res: Response) => {
     res.send("Hello, World!");
 });
 
@@ -35,11 +44,11 @@ app.use("/api/categories", CategoryRoutes)
 app.use('/api/technicians', TechnicianRoutes);
 app.use("/api/services", ServiceRoutes);
 app.use("/api/bookings", BookingRoutes);
+app.use("/api/payment", PaymentRoutes);
 app.use('/api/admin', AdminRoutes);
 app.use('/api/review', ReviewRoutes);
 
 app.use(notFound)
-
 app.use(globalErrorHandler)
 
 export default app;
