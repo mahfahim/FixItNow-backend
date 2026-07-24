@@ -1,17 +1,24 @@
 // src/modules/category/category.service.ts
-import { prisma } from "../../lib/prisma";
-import { Prisma } from "../../../generated/prisma/client";
-import { ICreateCategory, IUpdateCategory, ICategoryFilterRequest,IPaginationOptions } from './category.interface'; 
+import httpStatus from 'http-status';
+import { Prisma } from '../../../generated/prisma/client';
+import AppError from '../../errors/AppError';
+import { prisma } from '../../lib/prisma';
+import {
+  ICategoryFilterRequest,
+  ICreateCategory,
+  IPaginationOptions,
+  IUpdateCategory,
+} from './category.interface';
 
 const createCategory = async (payload: ICreateCategory) => {
-  const slug = payload.name.toLowerCase().replace(/\s+/g, '-');
+  const slug = payload.name.toLowerCase().trim().replace(/\s+/g, '-');
 
   const existingCategory = await prisma.category.findUnique({
     where: { slug },
   });
 
   if (existingCategory) {
-    throw new Error('Category already exists');
+    throw new AppError(httpStatus.CONFLICT, 'Category already exists');
   }
 
   const result = await prisma.category.create({
@@ -24,17 +31,16 @@ const createCategory = async (payload: ICreateCategory) => {
   return result;
 };
 
-
 const getAllCategories = async (
   filters: ICategoryFilterRequest,
   paginationOptions: IPaginationOptions
 ) => {
   const { search, isActive } = filters;
-  
-  
+
   const page = Number(paginationOptions.page || 1);
   const limit = Number(paginationOptions.limit || 10);
   const skip = (page - 1) * limit;
+
   const validSortFields = ['name', 'slug', 'createdAt', 'updatedAt'];
   const sortBy = validSortFields.includes(paginationOptions.sortBy || '')
     ? paginationOptions.sortBy!
@@ -43,7 +49,6 @@ const getAllCategories = async (
 
   const andConditions: Prisma.CategoryWhereInput[] = [];
 
-  
   if (search) {
     andConditions.push({
       OR: [
@@ -54,9 +59,7 @@ const getAllCategories = async (
     });
   }
 
-  
   if (isActive !== undefined) {
-    
     andConditions.push({
       isActive: isActive,
     });
@@ -65,7 +68,6 @@ const getAllCategories = async (
   const whereConditions: Prisma.CategoryWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
-  
   const result = await prisma.category.findMany({
     where: whereConditions,
     skip,
@@ -80,12 +82,10 @@ const getAllCategories = async (
     },
   });
 
-  
   const total = await prisma.category.count({
     where: whereConditions,
   });
 
-  
   return {
     meta: {
       page,
@@ -96,8 +96,6 @@ const getAllCategories = async (
   };
 };
 
-
-
 const getCategoryById = async (id: string) => {
   const result = await prisma.category.findUnique({
     where: { id },
@@ -107,7 +105,7 @@ const getCategoryById = async (id: string) => {
   });
 
   if (!result) {
-    throw new Error('Category not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Category not found');
   }
 
   return result;
@@ -119,21 +117,23 @@ const updateCategory = async (id: string, payload: IUpdateCategory) => {
   });
 
   if (!existingCategory) {
-    throw new Error('Category not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Category not found');
   }
 
   let slug = existingCategory.slug;
 
-  
   if (payload.name) {
-    slug = payload.name.toLowerCase().replace(/\s+/g, '-');
-    
+    slug = payload.name.toLowerCase().trim().replace(/\s+/g, '-');
+
     const slugConflict = await prisma.category.findFirst({
       where: { slug, id: { not: id } },
     });
 
     if (slugConflict) {
-      throw new Error('Category with this name already exists');
+      throw new AppError(
+        httpStatus.CONFLICT,
+        'Category with this name already exists'
+      );
     }
   }
 
@@ -154,7 +154,7 @@ const deleteCategory = async (id: string) => {
   });
 
   if (!existingCategory) {
-    throw new Error('Category not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Category not found');
   }
 
   const result = await prisma.category.delete({
@@ -171,12 +171,3 @@ export const CategoryService = {
   updateCategory,
   deleteCategory,
 };
-
-
-
-
-
-
-
-
-

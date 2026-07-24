@@ -1,10 +1,10 @@
 // src/modules/category/category.controller.ts
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import { catchAsync } from "../../utils/catchAsync";
-import { sendResponse } from "../../utils/sendResponse";
-import { CategoryService } from './category.service';
+import { catchAsync } from '../../utils/catchAsync';
+import { sendResponse } from '../../utils/sendResponse';
 import { ICategoryFilterRequest, IPaginationOptions } from './category.interface';
+import { CategoryService } from './category.service';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.createCategory(req.body);
@@ -17,9 +17,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
-  
   const filters: ICategoryFilterRequest = {};
 
   if (req.query.search) {
@@ -30,7 +28,6 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
     filters.isActive = req.query.isActive === 'true';
   }
 
-  
   const paginationOptions: IPaginationOptions = {
     page: req.query.page ? Number(req.query.page) : undefined,
     limit: req.query.limit ? Number(req.query.limit) : undefined,
@@ -38,20 +35,19 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
     sortOrder: req.query.sortOrder as 'asc' | 'desc',
   };
 
+  const result = await CategoryService.getAllCategories(
+    filters,
+    paginationOptions
+  );
 
-  const result = await CategoryService.getAllCategories(filters, paginationOptions);
-
-  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Categories fetched successfully',
-    meta: result.meta, 
-    data: result.data, 
+    meta: result.meta,
+    data: result.data,
   });
 });
-
-
 
 const getCategoryById = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.getCategoryById(req.params.id as string);
@@ -65,7 +61,10 @@ const getCategoryById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryService.updateCategory(req.params.id as string, req.body);
+  const result = await CategoryService.updateCategory(
+    req.params.id as string,
+    req.body
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

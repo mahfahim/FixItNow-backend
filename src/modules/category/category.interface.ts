@@ -8,11 +8,10 @@ export type ICreateCategory = {
   name: string;
   icon?: string;
   description?: string;
-};
-
-export type IUpdateCategory = Partial<ICreateCategory> & {
   isActive?: boolean;
 };
+
+export type IUpdateCategory = Partial<ICreateCategory>;
 
 export type IPaginationOptions = {
   page?: number;
