@@ -1,8 +1,11 @@
 // src/modules/technician/technician.route.ts
+
 import express from 'express';
-import { auth } from '../../middlewares/auth'; 
+import { auth } from '../../middlewares/auth';
+import { validateRequest } from '../../middlewares/validateRequest';
 import { Role } from '../../../generated/prisma/enums';
 import { TechnicianController } from './technician.controller';
+import { TechnicianValidation } from './technician.validation';
 
 const router = express.Router();
 
@@ -21,6 +24,7 @@ router.get(
 router.patch(
   '/bookings/:id',
   auth(Role.TECHNICIAN),
+  validateRequest(TechnicianValidation.updateBookingStatusValidationSchema),
   TechnicianController.updateBookingStatus
 );
 
@@ -28,6 +32,7 @@ router.patch(
 router.patch(
   '/profile',
   auth(Role.TECHNICIAN),
+  validateRequest(TechnicianValidation.updateProfileValidationSchema),
   TechnicianController.updateProfile
 );
 
@@ -35,6 +40,7 @@ router.patch(
 router.patch(
   '/availability',
   auth(Role.TECHNICIAN),
+  validateRequest(TechnicianValidation.setAvailabilityValidationSchema),
   TechnicianController.setAvailability
 );
 

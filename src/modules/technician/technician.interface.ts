@@ -1,7 +1,6 @@
 // src/modules/technician/technician.interface.ts
 import { Weekday, BookingStatus } from '../../../generated/prisma/enums';
 
-
 export type IUpdateTechnicianProfile = {
   bio?: string;
   yearsOfExperience?: number;
@@ -15,8 +14,8 @@ export type IUpdateTechnicianProfile = {
 
 export type IAvailabilitySlotPayload = {
   weekday: Weekday;
-  startTime: string; 
-  endTime: string;  
+  startTime: string;
+  endTime: string;
   isAvailable?: boolean;
 };
 
@@ -25,6 +24,13 @@ export type ITechnicianFilterOptions = {
   city?: string;
   district?: string;
   minRating?: string | number;
+};
+
+export type IPaginationOptions = {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 };
 
 export type IUpdateBookingStatusPayload = {

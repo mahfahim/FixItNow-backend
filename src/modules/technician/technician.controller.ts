@@ -1,14 +1,14 @@
 //src/modules/technician/technician.controller.ts
+
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import {catchAsync} from '../../utils/catchAsync';
-import {sendResponse} from '../../utils/sendResponse';
+import { catchAsync } from '../../utils/catchAsync';
+import { sendResponse } from '../../utils/sendResponse';
 import { TechnicianService } from './technician.service';
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
-  
-  const userId = user?.userId || user?.id; 
+  const userId = user?.userId || user?.id;
 
   const result = await TechnicianService.updateProfile(userId, req.body);
 
@@ -22,11 +22,8 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
 
 const setAvailability = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
-  console.log('Decoded Auth User:', user);
-  const userId = user?.userId || user?.id; 
-  if (!userId) {
-    throw new Error('User ID not found in token');
-  }
+  const userId = user?.userId || user?.id;
+
   const result = await TechnicianService.setAvailability(userId, req.body);
 
   sendResponse(res, {
@@ -38,14 +35,29 @@ const setAvailability = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllTechnicians = catchAsync(async (req: Request, res: Response) => {
-  const filters = req.query;
-  const result = await TechnicianService.getAllTechnicians(filters as any);
+  const filterKeys = ['search', 'city', 'district', 'minRating'];
+  const paginationKeys = ['page', 'limit', 'sortBy', 'sortOrder'];
+
+  const filters: Record<string, any> = {};
+  const options: Record<string, any> = {};
+
+  Object.keys(req.query).forEach((key) => {
+    if (filterKeys.includes(key)) {
+      filters[key] = req.query[key];
+    }
+    if (paginationKeys.includes(key)) {
+      options[key] = req.query[key];
+    }
+  });
+
+  const result = await TechnicianService.getAllTechnicians(filters, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Technicians fetched successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
@@ -61,8 +73,6 @@ const getTechnicianById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
 const getTechnicianBookings = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
   const userId = user?.userId || user?.id;
@@ -77,14 +87,16 @@ const getTechnicianBookings = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
-
-
 const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
   const userId = user?.userId || user?.id;
   const { id } = req.params;
 
-  const result = await TechnicianService.updateBookingStatus(userId, id as string, req.body);
+  const result = await TechnicianService.updateBookingStatus(
+    userId,
+    id as string,
+    req.body
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -93,7 +105,6 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 export const TechnicianController = {
   updateProfile,
