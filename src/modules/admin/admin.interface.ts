@@ -1,10 +1,32 @@
-//src/modules/admin/admin.interface.ts
-import { Role, UserStatus } from '../../../generated/prisma/client';
+import { Role, UserStatus, BookingStatus, PaymentStatus } from '../../../generated/prisma/client';
 
-export type IUserManagementFilterOptions = {
+export type IPaginationOptions = {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+};
+
+export type IUserFilterOptions = {
+  searchTerm?: string;
   role?: Role;
   status?: UserStatus;
-  search?: string;
+};
+
+export type IBookingFilterOptions = {
+  searchTerm?: string;
+  status?: BookingStatus;
+  paymentStatus?: PaymentStatus;
+};
+
+export type ICategoryFilterOptions = {
+  searchTerm?: string;
+  isActive?: boolean;
+};
+
+export type IReviewFilterOptions = {
+  searchTerm?: string;
+  rating?: number;
 };
 
 export type IUpdateUserStatusPayload = {

@@ -1,19 +1,22 @@
-//src/modules/admin/admin.controller.ts
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import {catchAsync} from '../../utils/catchAsync';
-import {sendResponse} from '../../utils/sendResponse';
+import { catchAsync } from '../../utils/catchAsync';
+import { sendResponse } from '../../utils/sendResponse';
 import { AdminService } from './admin.service';
+import pick from '../../utils/pick';
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const filters = req.query;
-  const result = await AdminService.getAllUsers(filters as any);
+  const filters = pick(req.query, ['searchTerm', 'role', 'status']);
+  const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+  const result = await AdminService.getAllUsers(filters, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Users retrieved successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
@@ -32,24 +35,32 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllBookingsAdmin = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getAllBookingsAdmin();
+  const filters = pick(req.query, ['searchTerm', 'status', 'paymentStatus']);
+  const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+  const result = await AdminService.getAllBookingsAdmin(filters, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'All platform bookings fetched successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getAllCategories();
+  const filters = pick(req.query, ['searchTerm', 'isActive']);
+  const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+  const result = await AdminService.getAllCategories(filters, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Categories retrieved successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
@@ -64,15 +75,18 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getAllReviews();
+  const filters = pick(req.query, ['searchTerm', 'rating']);
+  const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+  const result = await AdminService.getAllReviews(filters, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'All reviews fetched successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
@@ -87,7 +101,6 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 export const AdminController = {
   getAllUsers,
   updateUserStatus,
@@ -95,5 +108,5 @@ export const AdminController = {
   getAllCategories,
   createCategory,
   getAllReviews,
-  deleteReview
+  deleteReview,
 };

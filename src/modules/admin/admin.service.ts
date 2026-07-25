@@ -1,28 +1,46 @@
-//src/modules/admin/admin.service.ts
-import {prisma} from '../../lib/prisma';
+import { Prisma } from '../../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
+import httpStatus from 'http-status';
+import AppError from '../../errors/AppError';
 import {
-  IUserManagementFilterOptions,
+  IUserFilterOptions,
+  IBookingFilterOptions,
+  ICategoryFilterOptions,
+  IReviewFilterOptions,
+  IPaginationOptions,
   IUpdateUserStatusPayload,
   ICreateCategoryPayload,
 } from './admin.interface';
-import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
 
-const getAllUsers = async (filters: IUserManagementFilterOptions) => {
-  const { role, status, search } = filters;
-  const whereConditions: any = { isDeleted: false };
+const getAllUsers = async (
+  filters: IUserFilterOptions,
+  options: IPaginationOptions
+) => {
+  const { searchTerm, role, status } = filters;
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || 'createdAt';
+  const sortOrder = options.sortOrder || 'desc';
 
-  if (role) whereConditions.role = role;
-  if (status) whereConditions.status = status;
+  const andConditions: Prisma.UserWhereInput[] = [{ isDeleted: false }];
 
-  if (search) {
-    whereConditions.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-    ];
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { name: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+      ],
+    });
   }
 
-  const users = await prisma.user.findMany({
+  if (role) andConditions.push({ role });
+  if (status) andConditions.push({ status });
+
+  const whereConditions: Prisma.UserWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.user.findMany({
     where: whereConditions,
     select: {
       id: true,
@@ -34,10 +52,22 @@ const getAllUsers = async (filters: IUserManagementFilterOptions) => {
       createdAt: true,
       technicianProfile: { select: { id: true, averageRating: true } },
     },
-    orderBy: { createdAt: 'desc' },
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
   });
 
-  return users;
+  const total = await prisma.user.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
 const updateUserStatus = async (
@@ -47,7 +77,7 @@ const updateUserStatus = async (
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
   if (!user) {
-    throw new Error('User not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
   const updatedUser = await prisma.user.update({
@@ -59,8 +89,37 @@ const updateUserStatus = async (
   return updatedUser;
 };
 
-const getAllBookingsAdmin = async () => {
-  const bookings = await prisma.booking.findMany({
+const getAllBookingsAdmin = async (
+  filters: IBookingFilterOptions,
+  options: IPaginationOptions
+) => {
+  const { searchTerm, status, paymentStatus } = filters;
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || 'createdAt';
+  const sortOrder = options.sortOrder || 'desc';
+
+  const andConditions: Prisma.BookingWhereInput[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { customer: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { customer: { email: { contains: searchTerm, mode: 'insensitive' } } },
+        { service: { title: { contains: searchTerm, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  if (status) andConditions.push({ status });
+  if (paymentStatus) andConditions.push({ paymentStatus });
+
+  const whereConditions: Prisma.BookingWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.booking.findMany({
+    where: whereConditions,
     include: {
       customer: { select: { id: true, name: true, email: true } },
       technician: {
@@ -71,22 +130,71 @@ const getAllBookingsAdmin = async () => {
       service: { select: { id: true, title: true, price: true } },
       payment: true,
     },
-    orderBy: { createdAt: 'desc' },
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
   });
 
-  return bookings;
+  const total = await prisma.booking.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
-const getAllCategories = async () => {
-  const categories = await prisma.category.findMany({
-    orderBy: { createdAt: 'desc' },
+const getAllCategories = async (
+  filters: ICategoryFilterOptions,
+  options: IPaginationOptions
+) => {
+  const { searchTerm, isActive } = filters;
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || 'createdAt';
+  const sortOrder = options.sortOrder || 'desc';
+
+  const andConditions: Prisma.CategoryWhereInput[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      name: { contains: searchTerm, mode: 'insensitive' },
+    });
+  }
+
+  if (isActive !== undefined) {
+    andConditions.push({ isActive });
+  }
+
+  const whereConditions: Prisma.CategoryWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.category.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
   });
 
-  return categories;
+  const total = await prisma.category.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
 const createCategory = async (payload: ICreateCategoryPayload) => {
-  // Auto-generate slug if not provided
   const slug =
     payload.slug ||
     payload.name
@@ -95,6 +203,14 @@ const createCategory = async (payload: ICreateCategoryPayload) => {
       .replace(/[^a-z0-9 -]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
+
+  const existingCategory = await prisma.category.findUnique({
+    where: { slug },
+  });
+
+  if (existingCategory) {
+    throw new AppError(httpStatus.CONFLICT, 'Category with this slug already exists');
+  }
 
   const category = await prisma.category.create({
     data: {
@@ -109,9 +225,37 @@ const createCategory = async (payload: ICreateCategoryPayload) => {
   return category;
 };
 
+const getAllReviews = async (
+  filters: IReviewFilterOptions,
+  options: IPaginationOptions
+) => {
+  const { searchTerm, rating } = filters;
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || 'createdAt';
+  const sortOrder = options.sortOrder || 'desc';
 
-const getAllReviews = async () => {
-  const reviews = await prisma.review.findMany({
+  const andConditions: Prisma.ReviewWhereInput[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { customer: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { comment: { contains: searchTerm, mode: 'insensitive' } },
+      ],
+    });
+  }
+
+  if (rating) {
+    andConditions.push({ rating: Number(rating) });
+  }
+
+  const whereConditions: Prisma.ReviewWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.review.findMany({
+    where: whereConditions,
     include: {
       customer: { select: { id: true, name: true, email: true } },
       technician: {
@@ -119,10 +263,22 @@ const getAllReviews = async () => {
       },
       booking: { select: { id: true, service: { select: { title: true } } } },
     },
-    orderBy: { createdAt: 'desc' },
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
   });
 
-  return reviews;
+  const total = await prisma.review.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
 const deleteReview = async (reviewId: string) => {
@@ -139,7 +295,6 @@ const deleteReview = async (reviewId: string) => {
       where: { id: reviewId },
     });
 
-    // Recalculate technician profile rating
     const ratingAggregate = await tx.review.aggregate({
       where: { technicianId: existingReview.technicianId },
       _avg: { rating: true },
@@ -164,7 +319,6 @@ const deleteReview = async (reviewId: string) => {
 
   return result;
 };
-
 
 export const AdminService = {
   getAllUsers,
