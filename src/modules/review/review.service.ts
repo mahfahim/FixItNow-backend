@@ -1,15 +1,11 @@
-import { BookingStatus } from '../../../generated/prisma/client';
+import { BookingStatus, Prisma } from '../../../generated/prisma/client';
 import httpStatus from 'http-status';
-import {prisma} from '../../lib/prisma';
+import { prisma } from '../../lib/prisma';
 import AppError from '../../errors/AppError';
-import { ICreateReviewPayload } from './review.interface';
+import { ICreateReviewPayload, IReviewFilterOptions } from './review.interface';
 
 const createReview = async (userId: string, payload: ICreateReviewPayload) => {
   const { bookingId, rating, comment } = payload;
-
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Rating must be an integer between 1 and 5');
-  }
 
   // 1. Verify booking exists and includes review
   const booking = await prisma.booking.findUnique({
@@ -22,15 +18,24 @@ const createReview = async (userId: string, payload: ICreateReviewPayload) => {
   }
 
   if (booking.customerId !== userId) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Forbidden: You can only review your own bookings');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Forbidden: You can only review your own bookings'
+    );
   }
 
   if (booking.status !== BookingStatus.COMPLETED) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'You can only review completed jobs');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You can only review completed jobs'
+    );
   }
 
   if (booking.review) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Review already submitted for this booking');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Review already submitted for this booking'
+    );
   }
 
   // 2. Create review & recalculate average rating inside a transaction
@@ -70,30 +75,53 @@ const createReview = async (userId: string, payload: ICreateReviewPayload) => {
   return result;
 };
 
-const getTechnicianReviews = async (technicianId: string) => {
-  const reviews = await prisma.review.findMany({
-    where: { technicianId },
-    include: {
-      customer: {
-        select: { id: true, name: true },
-      },
-      booking: {
-        select: {
-          id: true,
-          service: { select: { title: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+// GetAll with Pagination, Filtering, and Search
+const getAllReviews = async (filters: IReviewFilterOptions) => {
+  const {
+    searchTerm,
+    rating,
+    technicianId,
+    customerId,
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = filters;
 
-  return reviews;
-};
+  const pageNumber = Number(page) || 1;
+  const limitNumber = Number(limit) || 10;
+  const skip = (pageNumber - 1) * limitNumber;
 
-const getMyReviews = async (userId: string) => {
+  const andConditions: Prisma.ReviewWhereInput[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { comment: { contains: searchTerm, mode: 'insensitive' } },
+        { customer: { name: { contains: searchTerm, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  if (rating) {
+    andConditions.push({ rating: Number(rating) });
+  }
+
+  if (technicianId) {
+    andConditions.push({ technicianId });
+  }
+
+  if (customerId) {
+    andConditions.push({ customerId });
+  }
+
+  const whereConditions: Prisma.ReviewWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
   const reviews = await prisma.review.findMany({
-    where: { customerId: userId },
+    where: whereConditions,
     include: {
+      customer: { select: { id: true, name: true, email: true } },
       technician: {
         include: {
           user: { select: { name: true, email: true } },
@@ -106,10 +134,33 @@ const getMyReviews = async (userId: string) => {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    skip,
+    take: limitNumber,
+    orderBy: { [sortBy]: sortOrder },
   });
 
-  return reviews;
+  const total = await prisma.review.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber),
+    },
+    data: reviews,
+  };
+};
+
+const getTechnicianReviews = async (
+  technicianId: string,
+  filters: IReviewFilterOptions
+) => {
+  return getAllReviews({ ...filters, technicianId });
+};
+
+const getMyReviews = async (userId: string, filters: IReviewFilterOptions) => {
+  return getAllReviews({ ...filters, customerId: userId });
 };
 
 const getReviewByBookingId = async (bookingId: string) => {
@@ -123,11 +174,16 @@ const getReviewByBookingId = async (bookingId: string) => {
     },
   });
 
+  if (!review) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Review not found for this booking');
+  }
+
   return review;
 };
 
 export const ReviewService = {
   createReview,
+  getAllReviews,
   getTechnicianReviews,
   getMyReviews,
   getReviewByBookingId,
