@@ -8,8 +8,8 @@
       "node"
     ],
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "noUncheckedIndexedAccess": true,
     "strict": true,
     "isolatedModules": true,
@@ -17,7 +17,10 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  // "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "generated/**/*"
+  ],
   "exclude": [
     "node_modules",
     "dist"
