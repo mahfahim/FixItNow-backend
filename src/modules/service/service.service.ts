@@ -1,6 +1,6 @@
 import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
 import { Prisma } from '../../../generated/prisma/client';
+import AppError from '../../errors/AppError';
 import { prisma } from '../../lib/prisma';
 import {
   ICreateServicePayload,
@@ -9,10 +9,9 @@ import {
 } from './service.interface';
 
 const createService = async (
-  authUser: { id: string; role: string; [key: string]: any },
+  authUser: { id?: string; userId?: string; role: string; [key: string]: any },
   payload: ICreateServicePayload
 ) => {
-  // auth.ts এ req.user.id হিসেবে আছে, তাই authUser.id ব্যবহার করা হয়েছে
   const currentUserId = authUser.id || authUser.userId;
 
   if (!currentUserId) {
@@ -27,7 +26,7 @@ const createService = async (
 
   if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: currentUserId }, // 🟢 authUser.id দিয়ে সঠিকভাবে খোঁজা হচ্ছে
+      where: { userId: currentUserId },
     });
 
     if (!technicianProfile) {
@@ -84,10 +83,10 @@ const createService = async (
   const service = await prisma.service.create({
     data: {
       ...serviceData,
-      price: new Prisma.Decimal(serviceData.price), // 🟢 Decimal Explicit Safe Handling
-      images: serviceData.images || [],             // 🟢 Default Array Safety
-      serviceArea: serviceData.serviceArea || [],   // 🟢 Default Array Safety
-      technicianId: targetTechnicianId,             // 🟢 Validated Technician Profile ID
+      price: new Prisma.Decimal(serviceData.price),
+      images: serviceData.images || [],
+      serviceArea: serviceData.serviceArea || [],
+      technicianId: targetTechnicianId,
     },
     include: {
       category: true,
@@ -100,9 +99,17 @@ const createService = async (
   return service;
 };
 
-
 const getAllServices = async (filters: IServiceFilterOptions) => {
-  const { search, categoryId, minPrice, maxPrice, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
+  const {
+    search,
+    categoryId,
+    minPrice,
+    maxPrice,
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = filters;
 
   const pageNum = Number(page);
   const limitNum = Number(limit);
@@ -184,12 +191,12 @@ const getServiceById = async (id: string) => {
 
   return service;
 };
+
 const updateService = async (
   authUser: { id?: string; userId?: string; role: string; [key: string]: any },
   serviceId: string,
   payload: IUpdateServicePayload
 ) => {
-  // 🟢 authUser.id বা authUser.userId দুটোই সেফলি হ্যান্ডেল করা হয়েছে
   const currentUserId = authUser.id || authUser.userId;
 
   const existingService = await prisma.service.findUnique({
@@ -204,7 +211,7 @@ const updateService = async (
 
   if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: currentUserId }, // 🟢 Fixed: userId: undefined হওয়া বন্ধ করা হলো
+      where: { userId: currentUserId },
     });
 
     if (
@@ -227,7 +234,6 @@ const updateService = async (
     }
   }
 
-  // 🟢 Price আপডেট করার ক্ষেত্রে প্রিসমার Decimal Safe Format নিশ্চিত করা
   const updateData: any = { ...payload };
   if (payload.price !== undefined) {
     updateData.price = new Prisma.Decimal(payload.price);
@@ -251,7 +257,6 @@ const deleteService = async (
   authUser: { id?: string; userId?: string; role: string; [key: string]: any },
   serviceId: string
 ) => {
-  // 🟢 authUser.id বা authUser.userId দুটোই সেফলি হ্যান্ডেল করা হয়েছে
   const currentUserId = authUser.id || authUser.userId;
 
   const existingService = await prisma.service.findUnique({
@@ -266,7 +271,7 @@ const deleteService = async (
 
   if (userRole === 'TECHNICIAN') {
     const technicianProfile = await prisma.technicianProfile.findUnique({
-      where: { userId: currentUserId }, // 🟢 Fixed: userId: undefined হওয়া বন্ধ করা হলো
+      where: { userId: currentUserId },
     });
 
     if (

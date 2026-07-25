@@ -1,10 +1,10 @@
 export type ICreateServicePayload = {
   categoryId: string;
-  technicianId?: string; 
+  technicianId?: string;
   title: string;
   description: string;
   price: number;
-  duration: number; // in minutes
+  duration: number; // minutes
   images?: string[];
   serviceArea?: string[];
 };
@@ -23,3 +23,11 @@ export type IServiceFilterOptions = {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 };
+
+export const serviceSearchableFields = ['title', 'description'];
+export const serviceFilterableFields = [
+  'search',
+  'categoryId',
+  'minPrice',
+  'maxPrice',
+];
