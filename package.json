@@ -4,7 +4,7 @@
   "description": "Your Trusted Home Service Platform",
   "main": "server.ts",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch ./src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "strip:webhook": "stripe listen --forward-to localhost:5000/api/payment/webhook/stripe",

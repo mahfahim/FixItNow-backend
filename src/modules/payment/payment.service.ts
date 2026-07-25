@@ -14,6 +14,7 @@ import {
   executeRefund,
   generateTransactionId,
   initiatePaymentGateway,
+  verifyStripeSession,
   verifyWebhookSignature,
 } from "./payment.utils";
 
@@ -145,11 +146,25 @@ const markPaymentCompleteInDB = async (
   });
 };
 
+
 const confirmPayment = async (payload: IConfirmPaymentPayload) => {
-  return markPaymentCompleteInDB(
-    payload.transactionId,
-    payload.status === "COMPLETED"
-  );
+  const session = await verifyStripeSession(payload.sessionId);
+
+  const transactionId = session.metadata?.transactionId;
+  if (!transactionId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid payment session metadata"
+    );
+  }
+
+  const isPaid = session.payment_status === "paid";
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+
+  return markPaymentCompleteInDB(transactionId, isPaid, paymentIntentId);
 };
 
 const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
@@ -368,7 +383,11 @@ const getAllPayments = async (
   };
 };
 
-const getPaymentById = async (userId: string, userRole: string, paymentId: string) => {
+const getPaymentById = async (
+  userId: string,
+  userRole: string,
+  paymentId: string
+) => {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
     include: {

@@ -25,7 +25,7 @@ export const initiatePaymentGateway = async (
               product_data: {
                 name: data.serviceName || "Service Booking Payment",
               },
-              unit_amount: Math.round(data.amount * 100), // Stripe expects cents
+              unit_amount: Math.round(data.amount * 100),
             },
             quantity: 1,
           },
@@ -58,6 +58,7 @@ export const initiatePaymentGateway = async (
   }
 
   if (data.provider === PaymentProvider.SSLCOMMERZ) {
+    // Note: SSLCommerz Integration Placeholder
     return {
       paymentUrl: `https://sandbox.sslcommerz.com/gwprocess/v4/api.php?Q=mock_${data.transactionId}`,
       sessionkey: `mock_session_${data.transactionId}`,
@@ -68,6 +69,20 @@ export const initiatePaymentGateway = async (
     httpStatus.BAD_REQUEST,
     `Unsupported payment provider: ${data.provider}`
   );
+};
+
+
+export const verifyStripeSession = async (
+  sessionId: string
+): Promise<Stripe.Checkout.Session> => {
+  try {
+    return await stripe.checkout.sessions.retrieve(sessionId);
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Failed to verify Stripe Session: ${error.message}`
+    );
+  }
 };
 
 export const verifyWebhookSignature = (

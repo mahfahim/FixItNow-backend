@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
-import  pick  from "../../utils/pick";
+import pick from "../../utils/pick";
 import { sendResponse } from "../../utils/sendResponse";
 import { PaymentService } from "./payment.service";
 
@@ -23,7 +23,8 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Payment status verified successfully",
+
+    message: "Payment status verified successfully with Stripe",
     data: result,
   });
 });

@@ -5,15 +5,15 @@ export type ICreatePaymentPayload = {
   provider: PaymentProvider;
 };
 
+
 export type IConfirmPaymentPayload = {
-  transactionId: string;
-  status: "COMPLETED" | "FAILED";
+  sessionId: string;
 };
 
 export type IRefundPaymentPayload = {
   paymentId: string;
   reason?: string;
-  amount?: number; 
+  amount?: number;
 };
 
 export type IPaginationOptions = {

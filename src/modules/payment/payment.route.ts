@@ -7,7 +7,7 @@ import { PaymentValidation } from "./payment.validation";
 
 const router = express.Router();
 
-
+// Webhook Route (Public & Raw Body Parser)
 router.post(
   "/webhook/stripe",
   express.raw({ type: "application/json" }),
@@ -22,8 +22,10 @@ router.post(
   PaymentController.createPaymentIntent
 );
 
+
 router.post(
   "/confirm",
+  auth(Role.CUSTOMER),
   validateRequest(PaymentValidation.confirmPaymentSchema),
   PaymentController.confirmPayment
 );

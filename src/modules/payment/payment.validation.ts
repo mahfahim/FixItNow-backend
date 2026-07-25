@@ -12,13 +12,11 @@ const createPaymentSchema = z.object({
   }),
 });
 
+
 const confirmPaymentSchema = z.object({
   body: z.object({
-    transactionId: z.string({
-      message: "Transaction ID is required",
-    }),
-    status: z.enum(["COMPLETED", "FAILED"], {
-      message: "Status must be either COMPLETED or FAILED",
+    sessionId: z.string({
+      message: "Stripe Checkout Session ID is required",
     }),
   }),
 });
