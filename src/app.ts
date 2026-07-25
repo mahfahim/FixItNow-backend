@@ -38,6 +38,35 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Hello, World!");
 });
 
+app.get("/payment/success", (req: Request, res: Response) => {
+  res.status(200).send(`
+    <html>
+      <head>
+        <title>Payment Successful</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; text-align:center; margin-top:100px;">
+        <h1>✅ Payment Successful</h1>
+        <p>Your payment has been completed successfully.</p>
+      </body>
+    </html>
+  `);
+});
+
+app.get("/payment/cancel", (req: Request, res: Response) => {
+  res.status(200).send(`
+    <html>
+      <head>
+        <title>Payment Cancelled</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; text-align:center; margin-top:100px;">
+        <h1>❌ Payment Cancelled</h1>
+        <p>Your payment was cancelled.</p>
+      </body>
+    </html>
+  `);
+});
+
+
 
 app.use("/api/auth", AuthRoutes)
 app.use("/api/categories", CategoryRoutes)
