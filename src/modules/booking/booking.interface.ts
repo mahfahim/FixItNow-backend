@@ -1,4 +1,4 @@
-import { BookingStatus, PaymentStatus } from "../../../generated/prisma/client";
+import { BookingStatus, PaymentStatus } from '../../../generated/prisma/client';
 
 export type ICreateBookingPayload = {
   serviceId: string;
@@ -16,6 +16,16 @@ export type IUpdateBookingStatusPayload = {
 };
 
 export type IBookingFilterOptions = {
+  searchTerm?: string;
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type IPaginationOptions = {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 };

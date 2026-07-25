@@ -1,8 +1,11 @@
+import httpStatus from 'http-status';
 import { BookingStatus, Role } from '../../../generated/prisma/client';
-import {prisma} from '../../lib/prisma';
+import AppError from '../../errors/AppError';
+import { prisma } from '../../lib/prisma';
 import {
-  ICreateBookingPayload,
   IBookingFilterOptions,
+  ICreateBookingPayload,
+  IPaginationOptions,
   IUpdateBookingStatusPayload,
 } from './booking.interface';
 
@@ -13,17 +16,26 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
   });
 
   if (!service || service.isDeleted || !service.isAvailable) {
-    throw new Error('Service is not available for booking');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Service is not available for booking'
+    );
   }
 
   if (!service.technicianId) {
-    throw new Error('Technician profile for this service was not found.');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Technician profile for this service was not found.'
+    );
   }
 
   // 2. Validate scheduledDate
   const dateObj = new Date(payload.scheduledDate);
   if (isNaN(dateObj.getTime())) {
-    throw new Error('Invalid date format for scheduledDate. Use YYYY-MM-DD.');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format for scheduledDate. Use YYYY-MM-DD.'
+    );
   }
 
   // 3. Create booking inside transaction
@@ -38,7 +50,6 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
         address: payload.address,
         price: service.price,
         status: BookingStatus.REQUESTED,
-        // Safely spread optional fields
         ...(payload.addressId ? { addressId: payload.addressId } : {}),
         ...(payload.notes ? { notes: payload.notes } : {}),
       },
@@ -62,32 +73,69 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
 const getUserBookings = async (
   userId: string,
   userRole: Role,
-  filters: IBookingFilterOptions
+  filters: IBookingFilterOptions,
+  paginationOptions: IPaginationOptions
 ) => {
-  const whereConditions: any = {};
+  const { searchTerm, status, paymentStatus, startDate, endDate } = filters;
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
 
-  if (filters.status) {
-    whereConditions.status = filters.status;
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  const andConditions: any[] = [];
+
+  //  Search Term Filtering
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { address: { contains: searchTerm, mode: 'insensitive' } },
+        { service: { title: { contains: searchTerm, mode: 'insensitive' } } },
+        { customer: { name: { contains: searchTerm, mode: 'insensitive' } } },
+      ],
+    });
   }
 
-  if (filters.paymentStatus) {
-    whereConditions.paymentStatus = filters.paymentStatus;
+  //  Status & Payment Status Filter
+  if (status) {
+    andConditions.push({ status });
   }
 
+  if (paymentStatus) {
+    andConditions.push({ paymentStatus });
+  }
+
+  //  Date Range Filter
+  if (startDate && endDate) {
+    andConditions.push({
+      scheduledDate: {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      },
+    });
+  }
+
+  // 👤 Role-based Authorization Filter
   if (userRole === Role.CUSTOMER) {
-    whereConditions.customerId = userId;
+    andConditions.push({ customerId: userId });
   } else if (userRole === Role.TECHNICIAN) {
     const technicianProfile = await prisma.technicianProfile.findUnique({
       where: { userId },
     });
     if (!technicianProfile) {
-      throw new Error('Technician profile not found');
+      throw new AppError(httpStatus.NOT_FOUND, 'Technician profile not found');
     }
-    whereConditions.technicianId = technicianProfile.id;
+    andConditions.push({ technicianId: technicianProfile.id });
   }
+  // Admin receives all bookings filtered by conditions
+
+  const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
 
   const bookings = await prisma.booking.findMany({
     where: whereConditions,
+    skip,
+    take: limitNum,
+    orderBy: { [sortBy]: sortOrder },
     include: {
       customer: { select: { id: true, name: true, email: true } },
       technician: {
@@ -96,13 +144,26 @@ const getUserBookings = async (
       service: { select: { id: true, title: true, price: true } },
       payment: true,
     },
-    orderBy: { createdAt: 'desc' },
   });
 
-  return bookings;
+  const total = await prisma.booking.count({ where: whereConditions });
+
+  return {
+    meta: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPage: Math.ceil(total / limitNum),
+    },
+    data: bookings,
+  };
 };
 
-const getBookingById = async (userId: string, userRole: Role, bookingId: string) => {
+const getBookingById = async (
+  userId: string,
+  userRole: Role,
+  bookingId: string
+) => {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
@@ -118,17 +179,19 @@ const getBookingById = async (userId: string, userRole: Role, bookingId: string)
   });
 
   if (!booking) {
-    throw new Error('Booking not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
   }
 
   if (userRole === Role.CUSTOMER && booking.customerId !== userId) {
-    throw new Error('Forbidden: Access denied');
+    throw new AppError(httpStatus.FORBIDDEN, 'Forbidden: Access denied');
   }
 
   if (userRole === Role.TECHNICIAN) {
-    const techProfile = await prisma.technicianProfile.findUnique({ where: { userId } });
+    const techProfile = await prisma.technicianProfile.findUnique({
+      where: { userId },
+    });
     if (!techProfile || booking.technicianId !== techProfile.id) {
-      throw new Error('Forbidden: Access denied');
+      throw new AppError(httpStatus.FORBIDDEN, 'Forbidden: Access denied');
     }
   }
 
@@ -146,22 +209,27 @@ const updateBookingStatus = async (
   });
 
   if (!booking) {
-    throw new Error('Booking not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
   }
 
   if (userRole === Role.CUSTOMER) {
     if (booking.customerId !== userId) {
-      throw new Error('Forbidden: Access denied');
+      throw new AppError(httpStatus.FORBIDDEN, 'Forbidden: Access denied');
     }
     if (payload.status !== BookingStatus.CANCELLED) {
-      throw new Error('Customers can only cancel bookings');
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Customers can only cancel bookings'
+      );
     }
   }
 
   if (userRole === Role.TECHNICIAN) {
-    const techProfile = await prisma.technicianProfile.findUnique({ where: { userId } });
+    const techProfile = await prisma.technicianProfile.findUnique({
+      where: { userId },
+    });
     if (!techProfile || booking.technicianId !== techProfile.id) {
-      throw new Error('Forbidden: Access denied');
+      throw new AppError(httpStatus.FORBIDDEN, 'Forbidden: Access denied');
     }
   }
 
@@ -170,7 +238,10 @@ const updateBookingStatus = async (
       booking.status === BookingStatus.IN_PROGRESS ||
       booking.status === BookingStatus.COMPLETED
     ) {
-      throw new Error('Cannot cancel a booking that is in progress or completed');
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Cannot cancel a booking that is in progress or completed'
+      );
     }
   }
 
