@@ -24,9 +24,9 @@ app.use(cors({
 
 
 app.post(
-    "/api/payment/webhook/stripe",
-    express.raw({ type: "application/json" }),
-    PaymentController.stripeWebhook
+  "/api/payment/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  PaymentController.stripeWebhook
 );
 
 app.use(express.json());
