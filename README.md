@@ -36,11 +36,7 @@ Admins can manage the entire platform including users, bookings, categories, and
 | 📮 Postman Documentation | https://documenter.getpostman.com/view/52004920/2sBY4Qtffz |
 | 💻 GitHub Repository | https://github.com/mahfahim/FixItNow-backend |
 
----
 
-# 🎥 Demo Video
-
-https://YOUR_VIDEO_LINK
 
 ---
 
