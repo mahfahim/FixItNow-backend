@@ -35,7 +35,7 @@ app.use(cookieParser());
 
 
 app.get("/", (req: Request, res: Response) => {
-    res.send("Hello, World!");
+    res.send("Welcome to Fixitnow-backend");
 });
 
 app.get("/payment/success", (req: Request, res: Response) => {
