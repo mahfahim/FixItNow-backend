@@ -2,7 +2,6 @@
 
 > A scalable RESTful backend API for a Home Service Marketplace built with **Node.js, Express.js, TypeScript, Prisma, PostgreSQL, and Stripe**.
 
-![Node.js](https://img.shields.io/badge/Node.js-20.x-green)
 ![Express](https://img.shields.io/badge/Express.js-Backend-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
@@ -36,11 +35,7 @@ Admins can manage the entire platform including users, bookings, categories, and
 | 📮 Postman Documentation | https://documenter.getpostman.com/view/52004920/2sBY4Qtffz |
 | 💻 GitHub Repository | https://github.com/mahfahim/FixItNow-backend |
 
----
 
-# 🎥 Demo Video
-
-https://YOUR_VIDEO_LINK
 
 ---
 
@@ -113,7 +108,6 @@ Password:
 
 ## Backend
 
-- Node.js
 - Express.js
 - TypeScript
 
