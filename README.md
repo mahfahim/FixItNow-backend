@@ -108,7 +108,6 @@ Password:
 
 ## Backend
 
-- Node.js
 - Express.js
 - TypeScript
 
