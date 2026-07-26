@@ -33,7 +33,7 @@ Admins can manage the entire platform including users, bookings, categories, and
 | Resource | Link |
 |----------|------|
 | 🌐 Live API | https://fixitnow-backend-tau.vercel.app/ |
-| 📮 Postman Documentation | https://documenter.getpostman.com/view/YOUR_POSTMAN_ID |
+| 📮 Postman Documentation | https://documenter.getpostman.com/view/52004920/2sBY4Qtffz |
 | 💻 GitHub Repository | https://github.com/mahfahim/FixItNow-backend |
 
 ---
@@ -240,7 +240,7 @@ FIXITNOW-BACKEND/
 ## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/FixItNow-backend.git
+git clone https://github.com/mahfahim/FixItNow-backend.git
 ```
 
 ```
@@ -262,23 +262,26 @@ npm install
 Create a `.env` file.
 
 ```env
-PORT=5000
+# Server Setup
+PORT=YOUR_PORT
+NODE_ENV=YOUR_NODE_ENV
+APP_URL=YOUR_APP_URL
 
-DATABASE_URL=
+# Database Connection (Prisma / PostgreSQL)
+DATABASE_URL=YOUR_DATABASE_URL
 
-JWT_ACCESS_SECRET=
+# Security & Authentication
+BCRYPT_SALT_ROUNDS=YOUR_BCRYPT_SALT_ROUNDS
+JWT_ACCESS_SECRET=YOUR_JWT_ACCESS_SECRET
+JWT_REFRESH_SECRET=YOUR_JWT_REFRESH_SECRET
+JWT_ACCESS_EXPIRES_IN=YOUR_JWT_ACCESS_EXPIRES_IN
+JWT_REFRESH_EXPIRES_IN=YOUR_JWT_REFRESH_EXPIRES_IN
 
-JWT_ACCESS_EXPIRES_IN=
-
-JWT_REFRESH_SECRET=
-
-JWT_REFRESH_EXPIRES_IN=
-
-BCRYPT_SALT_ROUNDS=
-
-STRIPE_SECRET_KEY=
-
-CLIENT_URL=
+# Stripe Payment Gateway
+STRIPE_SECRET_KEY=YOUR_STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET=YOUR_STRIPE_WEBHOOK_SECRET
+STRIPE_SUCCESS_URL=YOUR_STRIPE_SUCCESS_URL
+STRIPE_CANCEL_URL=YOUR_STRIPE_CANCEL_URL
 ```
 
 ---
@@ -339,7 +342,10 @@ npm start
 |---------|----------|
 | POST | /api/auth/register |
 | POST | /api/auth/login |
+| POST | /api/auth/refresh-token |
 | GET | /api/auth/me |
+| PATCH | /api/auth/me |
+| POST | /api/auth/address |
 
 ---
 
@@ -347,8 +353,9 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| GET | /api/categories |
-| POST | /api/categories |
+| GET | /api/categories/ |
+| GET | /api/categories/:id |
+| POST | /api/categories/ |
 | PATCH | /api/categories/:id |
 | DELETE | /api/categories/:id |
 
@@ -358,9 +365,9 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| GET | /api/services |
+| GET | /api/services/ |
 | GET | /api/services/:id |
-| POST | /api/services |
+| POST | /api/services/ |
 | PATCH | /api/services/:id |
 | DELETE | /api/services/:id |
 
@@ -370,10 +377,12 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| GET | /api/technicians |
-| GET | /api/technicians/:id |
-| PATCH | /api/technician/profile |
+| GET | /api/technicians/bookings |
+| PATCH | /api/technicians/bookings/:id |
+| PATCH | /api/technicians/profile |
 | PATCH | /api/technician/availability |
+| GET | /api/technician/ |
+| GET | /api/technician/:id |
 
 ---
 
@@ -381,10 +390,10 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| POST | /api/bookings |
-| GET | /api/bookings |
+| POST | /api/bookings/ |
+| GET | /api/bookings/ |
 | GET | /api/bookings/:id |
-| PATCH | /api/bookings/:id |
+| PATCH | /api/bookings/:id/status |
 
 ---
 
@@ -392,10 +401,12 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| POST | /api/payments/create |
-| POST | /api/payments/confirm |
-| GET | /api/payments |
-| GET | /api/payments/:id |
+| POST | /api/payment/create |
+| POST | /api/payment/confirm |
+| POST | /api/payment/refund |
+| GET | /api/payment/history |
+| GET | /api/payment/ |
+| GET | /api/payment/:id |
 
 ---
 
@@ -403,8 +414,11 @@ npm start
 
 | Method | Endpoint |
 |---------|----------|
-| POST | /api/reviews |
-| GET | /api/reviews |
+| POST | /api/review/ |
+| GET | /api/review/ |
+| GET | /api/review/my-reviews |
+| GET | /api/review/technician/:technicianId |
+| GET | /api/review/booking/:bookingId |
 
 ---
 
@@ -416,6 +430,10 @@ npm start
 | PATCH | /api/admin/users/:id |
 | GET | /api/admin/bookings |
 | GET | /api/admin/categories |
+| POST | /api/admin/categories |
+| GET | /api/admin/reviews |
+| DELETE | /api/admin/reviews/:id |
+
 
 ---
 
@@ -423,59 +441,234 @@ npm start
 
 ## ER Diagram
 
-> Add your ER Diagram image here.
 
-```
-docs/database-schema.png
+```mermaid
+erDiagram
+    User ||--o| TechnicianProfile : "has profile"
+    User ||--o{ Address : "has addresses"
+    User ||--o{ Booking : "books as customer"
+    User ||--o{ Review : "writes review"
+    User ||--o{ RefreshToken : "owns tokens"
+    User ||--o{ Notification : "receives"
+    User ||--o{ FavoriteTechnician : "favorites"
+    TechnicianProfile ||--o{ Service : "offers"
+    TechnicianProfile ||--o{ Booking : "fulfills as technician"
+    TechnicianProfile ||--o{ Review : "receives review"
+    TechnicianProfile ||--o{ AvailabilitySlot : "defines"
+    TechnicianProfile ||--o{ FavoriteTechnician : "favorited by"
+    Category ||--o{ Service : "categorizes"
+    Service ||--o{ Booking : "booked as"
+    Address |o--o{ Booking : "used in"
+    Booking ||--o| Payment : "has payment"
+    Booking ||--o| Review : "has review"
+    Booking ||--o{ BookingStatusHistory : "tracks status"
+
+    User {
+        string id PK
+        string name
+        string email UK
+        string password
+        Role role
+        UserStatus status
+        boolean isDeleted
+        datetime lastLoginAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    TechnicianProfile {
+        string id PK
+        string userId FK, UK
+        string bio
+        int yearsOfExperience
+        decimal hourlyRate
+        decimal averageRating
+        int totalReviews
+        int totalCompletedJobs
+        string profileImage
+        string phone
+        string address
+        string city
+        string district
+        boolean isDeleted
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Category {
+        string id PK
+        string name
+        string slug UK
+        string icon
+        string description
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Service {
+        string id PK
+        string technicianId FK
+        string categoryId FK
+        string title
+        string description
+        decimal price
+        int duration
+        string images "string array"
+        string serviceArea "string array"
+        boolean isAvailable
+        boolean isDeleted
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Address {
+        string id PK
+        string userId FK
+        string label
+        string addressLine
+        string city
+        string district
+        string postalCode
+        boolean isDefault
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Booking {
+        string id PK
+        string customerId FK
+        string technicianId FK
+        string serviceId FK
+        string addressId FK
+        date scheduledDate
+        string scheduledTime
+        string address "denormalized snapshot"
+        string notes
+        decimal price
+        BookingStatus status
+        PaymentStatus paymentStatus
+        string cancellationReason
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    BookingStatusHistory {
+        string id PK
+        string bookingId FK
+        BookingStatus status
+        string note
+        datetime createdAt
+    }
+
+    Payment {
+        string id PK
+        string bookingId FK, UK
+        string transactionId UK
+        decimal amount
+        string currency
+        PaymentProvider provider
+        PaymentStatus status
+        datetime paidAt
+        json metadata
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Review {
+        string id PK
+        string bookingId FK, UK
+        string customerId FK
+        string technicianId FK
+        int rating
+        string comment
+        datetime createdAt
+    }
+
+    AvailabilitySlot {
+        string id PK
+        string technicianId FK
+        Weekday weekday
+        string startTime
+        string endTime
+        boolean isAvailable
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    RefreshToken {
+        string id PK
+        string userId FK
+        string token UK
+        datetime expiresAt
+        boolean revoked
+        datetime createdAt
+    }
+
+    Notification {
+        string id PK
+        string userId FK
+        NotificationType type
+        string title
+        string message
+        boolean isRead
+        json metadata
+        datetime createdAt
+    }
+
+    FavoriteTechnician {
+        string id PK
+        string customerId FK
+        string technicianId FK
+        datetime createdAt
+    }
 ```
 
-or
 
-```
-docs/database-schema.pdf
-```
 
 ---
 
 ## Database Tables
 
-- Users
-- TechnicianProfiles
-- Categories
-- Services
-- Bookings
-- Payments
-- Reviews
+
+- User
+- TechnicianProfile
+- Service
+- Category
+- Booking
+- BookingStatusHistory
+- Payment
+- Review
+- Address
+- AvailabilitySlot
+- FavoriteTechnician
+- Notification
+- RefreshToken
 
 ---
 
 ## Relationships
 
-```
-User
-│
-├── TechnicianProfile
-
-User
-│
-├── Booking
-
-Technician
-│
-├── Booking
-
-Category
-│
-├── Service
-
-Booking
-│
-├── Payment
-
-Booking
-│
-├── Review
-```
+| Source Entity | Target Entity | Relationship Type | Description |
+| --- | --- | --- | --- |
+| **User** | **TechnicianProfile** | One-to-One `(1 : 0..1)` | A user can optionally have a technician profile. |
+| **User** | **Address** | One-to-Many `(1 : N)` | A user can save multiple addresses. |
+| **User** | **Booking** | One-to-Many `(1 : N)` | A user (customer) can make multiple bookings. |
+| **User** | **Review** | One-to-Many `(1 : N)` | A user (customer) can write multiple reviews. |
+| **User** | **FavoriteTechnician** | One-to-Many `(1 : N)` | A user can favorite multiple technicians. |
+| **User** | **Notification** | One-to-Many `(1 : N)` | A user can receive multiple system notifications. |
+| **User** | **RefreshToken** | One-to-Many `(1 : N)` | A user can have multiple active session tokens. |
+| **TechnicianProfile** | **Service** | One-to-Many `(1 : N)` | A technician can offer multiple services. |
+| **TechnicianProfile** | **Booking** | One-to-Many `(1 : N)` | A technician can fulfill multiple service bookings. |
+| **TechnicianProfile** | **Review** | One-to-Many `(1 : N)` | A technician receives reviews from multiple bookings. |
+| **TechnicianProfile** | **AvailabilitySlot** | One-to-Many `(1 : N)` | A technician sets multiple weekly time slots. |
+| **TechnicianProfile** | **FavoriteTechnician** | One-to-Many `(1 : N)` | A technician can be favorited by multiple customers. |
+| **Category** | **Service** | One-to-Many `(1 : N)` | A category contains multiple services. |
+| **Service** | **Booking** | One-to-Many `(1 : N)` | A service can be booked multiple times. |
+| **Address** | **Booking** | One-to-Many `(0..1 : N)` | An address can be attached to multiple bookings. |
+| **Booking** | **Payment** | One-to-One `(1 : 0..1)` | A booking has zero or one payment record. |
+| **Booking** | **Review** | One-to-One `(1 : 0..1)` | A booking can have at most one customer review. |
+| **Booking** | **BookingStatusHistory** | One-to-Many `(1 : N)` | A booking logs multiple status change events. |
 
 ---
 
@@ -542,42 +735,10 @@ Database
 
 Postman Documentation
 
-https://documenter.getpostman.com/view/YOUR_POSTMAN_ID
+https://documenter.getpostman.com/view/52004920/2sBY4Qtffz
 
 ---
 
-# 📌 Future Improvements
 
-- Email Notifications
-- Real-time Chat
-- Push Notifications
-- Image Upload
-- Dashboard Analytics
-- Docker Support
-- CI/CD Pipeline
 
----
 
-# 👨‍💻 Author
-
-**Md. Abdul Hai Fahim**
-
-Computer Science & Engineering
-
-Patuakhali Science and Technology University
-
-GitHub:
-https://github.com/YOUR_USERNAME
-
-LinkedIn:
-https://linkedin.com/in/YOUR_PROFILE
-
----
-
-# 📜 License
-
-This project is licensed under the MIT License.
-
----
-
-⭐ If you like this project, don't forget to give it a Star.
