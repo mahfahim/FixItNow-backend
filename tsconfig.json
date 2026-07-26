@@ -1,25 +1,31 @@
 {
   "compilerOptions": {
+    "rootDir": "./",
     "outDir": "./dist",
-    "module": "ESNext",
+    "module": "esnext",
+    "target": "es2023",
     "moduleResolution": "bundler",
-    "target": "ES2023",
     "types": [
       "node"
     ],
+    // Other Outputs
     "sourceMap": true,
-    "declaration": false,
-    "declarationMap": false,
+    "declaration": true,
+    "declarationMap": true,
+    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    // Recommended Options
     "strict": true,
+    // "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "include": [
-    "src/**/*",
-    "generated/**/*"
+    "./*/"
   ],
   "exclude": [
     "node_modules",

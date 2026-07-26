@@ -5,3 +5,4 @@ generated/
 /generated/prisma
 scripts/
 .vercel/
+vercel.json
