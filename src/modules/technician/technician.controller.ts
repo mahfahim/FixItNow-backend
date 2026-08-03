@@ -6,6 +6,20 @@ import { catchAsync } from '../../utils/catchAsync';
 import { sendResponse } from '../../utils/sendResponse';
 import { TechnicianService } from './technician.service';
 
+const getAvailability = catchAsync(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const userId = user?.userId || user?.id;
+
+  const result = await TechnicianService.getAvailability(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Availability slots retrieved successfully',
+    data: result,
+  });
+});
+
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
   const userId = user?.userId || user?.id;
@@ -107,6 +121,7 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const TechnicianController = {
+  getAvailability,
   updateProfile,
   setAvailability,
   getAllTechnicians,

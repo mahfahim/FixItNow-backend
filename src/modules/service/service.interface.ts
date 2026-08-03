@@ -16,6 +16,7 @@ export type IUpdateServicePayload = Partial<ICreateServicePayload> & {
 export type IServiceFilterOptions = {
   search?: string;
   categoryId?: string;
+  technicianId?: string;
   minPrice?: string | number;
   maxPrice?: string | number;
   page?: string | number;

@@ -99,10 +99,12 @@ const createService = async (
   return service;
 };
 
+
 const getAllServices = async (filters: IServiceFilterOptions) => {
   const {
     search,
     categoryId,
+    technicianId,
     minPrice,
     maxPrice,
     page = 1,
@@ -117,8 +119,14 @@ const getAllServices = async (filters: IServiceFilterOptions) => {
 
   const whereConditions: any = {
     isDeleted: false,
-    isAvailable: true,
   };
+
+  
+  if (technicianId) {
+    whereConditions.technicianId = technicianId;
+  } else {
+    whereConditions.isAvailable = true;
+  }
 
   if (categoryId) {
     whereConditions.categoryId = categoryId;
@@ -170,6 +178,7 @@ const getAllServices = async (filters: IServiceFilterOptions) => {
     data: services,
   };
 };
+
 
 const getServiceById = async (id: string) => {
   const service = await prisma.service.findUnique({

@@ -12,6 +12,34 @@ import {
   IUpdateTechnicianProfile,
 } from './technician.interface';
 
+// GET AVAILABILITY
+const getAvailability = async (userId: string) => {
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'User ID is missing from authorization token'
+    );
+  }
+
+  const profile = await prisma.technicianProfile.findUnique({
+    where: { userId },
+  });
+
+  if (!profile) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Technician profile not found. Please create a profile first.'
+    );
+  }
+
+  const availabilitySlots = await prisma.availabilitySlot.findMany({
+    where: { technicianId: profile.id },
+  });
+
+  return availabilitySlots;
+};
+
+
 // UPDATE PROFILE
 const updateProfile = async (
   userId: string,
@@ -327,6 +355,7 @@ const updateBookingStatus = async (
 };
 
 export const TechnicianService = {
+  getAvailability,
   updateProfile,
   setAvailability,
   getAllTechnicians,

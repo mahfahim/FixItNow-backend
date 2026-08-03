@@ -8,11 +8,11 @@ import { PaymentValidation } from "./payment.validation";
 const router = express.Router();
 
 // Webhook Route (Public & Raw Body Parser)
-router.post(
-  "/webhook/stripe",
-  express.raw({ type: "application/json" }),
-  PaymentController.stripeWebhook
-);
+// router.post(
+//   "/webhook/stripe",
+//   express.raw({ type: "application/json" }),
+//   PaymentController.stripeWebhook
+// );
 
 // Payment Operations
 router.post(

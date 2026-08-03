@@ -170,6 +170,7 @@ const getMyProfile = async (userId: string) => {
       name: true,
       email: true,
       role: true,
+      profileImage: true,
       status: true,
       createdAt: true,
       updatedAt: true,
@@ -189,18 +190,20 @@ const updateMyProfile = async (
   userId: string,
   payload: IUpdateUserProfile
 ) => {
-  const { name } = payload;
-
+  const { name, profileImage } = payload;
+  console.log(profileImage);
   const result = await prisma.user.update({
     where: { id: userId },
     data: {
       name,
+      profileImage,
     },
     select: {
       id: true,
       name: true,
       email: true,
       role: true,
+      profileImage: true,
       status: true,
       updatedAt: true,
     },

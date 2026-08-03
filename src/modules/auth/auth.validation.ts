@@ -38,6 +38,7 @@ const refreshTokenValidationSchema = z.object({
   }),
 });
 
+
 const updateMyProfileValidationSchema = z.object({
   body: z.object({
     name: z
@@ -45,6 +46,11 @@ const updateMyProfileValidationSchema = z.object({
       .min(2, 'Name must be at least 2 characters')
       .max(255, 'Name cannot exceed 255 characters')
       .optional(),
+    profileImage: z
+      .string()
+      .url('Invalid profile image URL')
+      .optional()
+      .or(z.literal('')), 
   }),
 });
 

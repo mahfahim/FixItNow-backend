@@ -14,6 +14,13 @@ export const initiatePaymentGateway = async (
 ): Promise<IGatewayResult> => {
   if (data.provider === PaymentProvider.STRIPE) {
     try {
+  
+      const numericAmount = Number(data.amount);
+
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Invalid payment amount");
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
@@ -21,11 +28,12 @@ export const initiatePaymentGateway = async (
         line_items: [
           {
             price_data: {
-              currency: "usd",
+              currency: "usd", 
               product_data: {
                 name: data.serviceName || "Service Booking Payment",
               },
-              unit_amount: Math.round(data.amount * 100),
+              
+              unit_amount: Math.round(numericAmount * 100),
             },
             quantity: 1,
           },
@@ -51,14 +59,13 @@ export const initiatePaymentGateway = async (
       };
     } catch (error: any) {
       throw new AppError(
-        httpStatus.BAD_REQUEST,
+        error.statusCode || httpStatus.BAD_REQUEST,
         `Stripe Gateway Error: ${error.message || "Failed to initiate payment"}`
       );
     }
   }
 
   if (data.provider === PaymentProvider.SSLCOMMERZ) {
-    // Note: SSLCommerz Integration Placeholder
     return {
       paymentUrl: `https://sandbox.sslcommerz.com/gwprocess/v4/api.php?Q=mock_${data.transactionId}`,
       sessionkey: `mock_session_${data.transactionId}`,
@@ -70,7 +77,6 @@ export const initiatePaymentGateway = async (
     `Unsupported payment provider: ${data.provider}`
   );
 };
-
 
 export const verifyStripeSession = async (
   sessionId: string

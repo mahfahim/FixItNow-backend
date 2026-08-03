@@ -7,6 +7,7 @@ import { Role } from '../../../generated/prisma/enums';
 import { TechnicianController } from './technician.controller';
 import { TechnicianValidation } from './technician.validation';
 
+
 const router = express.Router();
 
 // =========================================================
@@ -18,6 +19,13 @@ router.get(
   '/bookings',
   auth(Role.TECHNICIAN),
   TechnicianController.getTechnicianBookings
+);
+
+// GET /api/technicians/availability  <-- ADDED HERE
+router.get(
+  '/availability',
+  auth(Role.TECHNICIAN),
+  TechnicianController.getAvailability
 );
 
 // PATCH /api/technicians/bookings/:id

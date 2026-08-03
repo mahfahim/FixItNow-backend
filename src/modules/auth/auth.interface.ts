@@ -13,6 +13,7 @@ export interface IRegisterUser {
 
 export type IUpdateUserProfile = {
   name?: string;
+  profileImage?: string;  
 };
 
 export type ICreateAddress = {
