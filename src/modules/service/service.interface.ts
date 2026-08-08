@@ -19,6 +19,8 @@ export type IServiceFilterOptions = {
   technicianId?: string;
   minPrice?: string | number;
   maxPrice?: string | number;
+  isAvailable?: boolean | string;      
+  includeUnavailable?: boolean | string;
   page?: string | number;
   limit?: string | number;
   sortBy?: string;

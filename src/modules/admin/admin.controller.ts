@@ -35,7 +35,7 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllBookingsAdmin = catchAsync(async (req: Request, res: Response) => {
-  const filters = pick(req.query, ['searchTerm', 'status', 'paymentStatus']);
+  const filters = pick(req.query, ['searchTerm', 'search', 'status', 'paymentStatus']);
   const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
 
   const result = await AdminService.getAllBookingsAdmin(filters, options);
@@ -50,7 +50,7 @@ const getAllBookingsAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
-  const filters = pick(req.query, ['searchTerm', 'isActive']);
+  const filters = pick(req.query, ['searchTerm','search', 'isActive']);
   const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
 
   const result = await AdminService.getAllCategories(filters, options);
@@ -76,7 +76,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-  const filters = pick(req.query, ['searchTerm', 'rating']);
+  const filters = pick(req.query, ['searchTerm','search', 'rating']);
   const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
 
   const result = await AdminService.getAllReviews(filters, options);

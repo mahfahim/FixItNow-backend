@@ -20,8 +20,9 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   const filters: ICategoryFilterRequest = {};
 
-  if (req.query.search) {
-    filters.search = req.query.search as string;
+  const searchValue = (req.query.search || req.query.searchTerm) as string;
+  if (searchValue) {
+    filters.search = searchValue;
   }
 
   if (req.query.isActive !== undefined) {

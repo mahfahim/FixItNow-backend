@@ -143,6 +143,7 @@ const getUserBookings = async (
       },
       service: { select: { id: true, title: true, price: true } },
       payment: true,
+      review: true,
     },
   });
 

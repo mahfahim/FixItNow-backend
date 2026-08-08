@@ -1,5 +1,6 @@
 // src/modules/category/category.interface.ts
 export type ICategoryFilterRequest = {
+  searchTerm?: string;
   search?: string;
   isActive?: boolean;
 };

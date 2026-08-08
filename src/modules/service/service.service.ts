@@ -44,6 +44,7 @@ const createService = async (
       );
     }
 
+    
     const technicianProfile = await prisma.technicianProfile.findFirst({
       where: {
         OR: [
@@ -56,7 +57,7 @@ const createService = async (
     if (!technicianProfile) {
       throw new AppError(
         httpStatus.NOT_FOUND,
-        'Technician profile not found'
+        'Technician profile not found for the provided technicianId' 
       );
     }
 
@@ -99,7 +100,6 @@ const createService = async (
   return service;
 };
 
-
 const getAllServices = async (filters: IServiceFilterOptions) => {
   const {
     search,
@@ -107,6 +107,8 @@ const getAllServices = async (filters: IServiceFilterOptions) => {
     technicianId,
     minPrice,
     maxPrice,
+    includeUnavailable, 
+    isAvailable,        
     page = 1,
     limit = 10,
     sortBy = 'createdAt',
@@ -121,10 +123,14 @@ const getAllServices = async (filters: IServiceFilterOptions) => {
     isDeleted: false,
   };
 
-  
   if (technicianId) {
     whereConditions.technicianId = technicianId;
-  } else {
+  }
+
+  
+  if (isAvailable !== undefined && isAvailable !== '') {
+    whereConditions.isAvailable = isAvailable === 'true' || isAvailable === true;
+  } else if (!technicianId && includeUnavailable !== 'true' && includeUnavailable !== true) {
     whereConditions.isAvailable = true;
   }
 
@@ -178,7 +184,6 @@ const getAllServices = async (filters: IServiceFilterOptions) => {
     data: services,
   };
 };
-
 
 const getServiceById = async (id: string) => {
   const service = await prisma.service.findUnique({
@@ -243,7 +248,31 @@ const updateService = async (
     }
   }
 
-  const updateData: any = { ...payload };
+  
+  const { technicianId, ...otherData } = payload;
+  const updateData: any = { ...otherData };
+
+  
+  if (userRole === 'ADMIN' && technicianId) {
+    const technicianProfile = await prisma.technicianProfile.findFirst({
+      where: {
+        OR: [
+          { id: technicianId },
+          { userId: technicianId },
+        ],
+      },
+    });
+
+    if (!technicianProfile) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Target technician profile not found'
+      );
+    }
+
+    updateData.technicianId = technicianProfile.id;
+  }
+
   if (payload.price !== undefined) {
     updateData.price = new Prisma.Decimal(payload.price);
   }

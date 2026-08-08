@@ -37,16 +37,19 @@ const createReview = async (userId: string, payload: ICreateReviewPayload) => {
       'Review already submitted for this booking'
     );
   }
-
-  // 2. Create review & recalculate average rating inside a transaction
+  
+  if (!bookingId) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Booking ID is required');
+  }
+  
   const result = await prisma.$transaction(async (tx) => {
     const newReview = await tx.review.create({
       data: {
         bookingId,
         customerId: userId,
         technicianId: booking.technicianId,
-        rating,
-        comment,
+        rating: Number(rating),  
+        comment: comment || '',
       },
     });
 

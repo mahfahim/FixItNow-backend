@@ -13,10 +13,11 @@ import {
 } from './admin.interface';
 
 const getAllUsers = async (
-  filters: IUserFilterOptions,
-  options: IPaginationOptions
+  filters: IUserFilterOptions & { search?: string } = {},
+  options: IPaginationOptions = {}
 ) => {
-  const { searchTerm, role, status } = filters;
+  const searchTerm = filters.searchTerm ;
+  const { role, status } = filters;
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 10;
   const skip = (page - 1) * limit;
@@ -46,6 +47,7 @@ const getAllUsers = async (
       id: true,
       name: true,
       email: true,
+      profileImage: true,
       role: true,
       status: true,
       lastLoginAt: true,
@@ -56,6 +58,7 @@ const getAllUsers = async (
     take: limit,
     orderBy: { [sortBy]: sortOrder },
   });
+  
 
   const total = await prisma.user.count({ where: whereConditions });
 
@@ -88,12 +91,14 @@ const updateUserStatus = async (
 
   return updatedUser;
 };
-
 const getAllBookingsAdmin = async (
-  filters: IBookingFilterOptions,
+  filters: IBookingFilterOptions & { search?: string },
   options: IPaginationOptions
 ) => {
-  const { searchTerm, status, paymentStatus } = filters;
+  
+  const searchTerm = filters.searchTerm || filters.search;
+  const { status, paymentStatus } = filters;
+
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 10;
   const skip = (page - 1) * limit;
@@ -105,9 +110,16 @@ const getAllBookingsAdmin = async (
   if (searchTerm) {
     andConditions.push({
       OR: [
+        
+        { id: { contains: searchTerm, mode: 'insensitive' } },
+      
         { customer: { name: { contains: searchTerm, mode: 'insensitive' } } },
         { customer: { email: { contains: searchTerm, mode: 'insensitive' } } },
+        
         { service: { title: { contains: searchTerm, mode: 'insensitive' } } },
+      
+        { technician: { user: { name: { contains: searchTerm, mode: 'insensitive' } } } },
+        { technician: { user: { email: { contains: searchTerm, mode: 'insensitive' } } } },
       ],
     });
   }

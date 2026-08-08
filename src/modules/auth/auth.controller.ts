@@ -6,6 +6,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
 import config from "../../config";
 
+const isProduction = process.env.NODE_ENV === "production";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.registerUserIntoDB(req.body);
@@ -25,18 +26,20 @@ const login = catchAsync(async (req : Request, res : Response, next : NextFuncti
     const {accessToken, refreshToken} = await AuthService.loginUser(payload);
 
     res.cookie("accessToken", accessToken, {
-        httpOnly : true,
-        secure : false,
-        sameSite : "none",
-        maxAge : 1000 * 60 * 60 * 24 // 24 hour or 1 day
-    })
+        httpOnly: true,
+        secure: isProduction, 
+        sameSite: isProduction ? "none" : "lax",
+        path: "/", 
+        maxAge: 1000 * 60 * 60 * 24,
+    });
 
     res.cookie("refreshToken", refreshToken, {
-        httpOnly : true,
-        secure : false,
-        sameSite : "none",
-        maxAge : 1000 * 60 * 60 * 24 * 7 // 7 days
-    })
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
 
     sendResponse(res, {
         success: true,
@@ -53,10 +56,11 @@ const refreshToken = catchAsync(async (req : Request, res : Response, next: Next
 
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: false,
-        sameSite: "none",
-        maxAge: 1000 * 60 * 60 * 24 // 24 hour or 1 day
-    })
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+        maxAge: 1000 * 60 * 60 * 24,
+    });
 
     sendResponse(res, {
         success : true,
